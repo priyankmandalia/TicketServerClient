@@ -242,3 +242,4 @@ pip-log.txt
 /RMIClient/nbproject/private/
 /RMIServer/nbproject/private/
 *.properties
+*.properties
