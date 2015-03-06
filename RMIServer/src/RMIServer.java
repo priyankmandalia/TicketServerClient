@@ -1,4 +1,8 @@
+
+
 import java.awt.Color;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -8,6 +12,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
+
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -24,16 +29,18 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
 	Color purple = new Color(78,49,104);
         GUI gui;
         static RMI rmi;
+        ElectionManager em;
         
-        ArrayList<String> serverIPs = new ArrayList<String>();
+        String serverIPs[]= {"148.197.27.144","148.197.27.146"};
         
-        public static void main(String[] args) throws RemoteException{
-        
-            startServer(Integer.parseInt(args[0]));
+        public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException{
+            
+                
+                startServer(Integer.parseInt(args[0]));
         
         }
         
-	public RMIServer() throws RemoteException{
+	public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException{
     	
             super();
         
@@ -42,13 +49,13 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
             events.add(new Event("Gusbury 2015", "A major UK music and contemporary performance arts festival"));
             events.add(new Event("Priyankbury 2015", "A major UK music and contemporary performance arts festival"));
     	
-            gui = new GUI("RMI Server");    	
+            gui = new GUI("RMI Server");
             
-            serverIPs.add("148.197.27.153");
+            em = new ElectionManager(serverIPs);
     	
 	}
         
-        public static void startServer(int port) throws RemoteException{
+        public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException{
         
             Registry reg = LocateRegistry.createRegistry(port);
             reg.rebind("server", new RMIServer());
@@ -178,9 +185,9 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
         
     public void updateServers() throws RemoteException, NotBoundException{
     
-        for(int i = 0; i < serverIPs.size(); i++){
+        for(int i = 0; i < serverIPs.length; i++){
         
-            connectServer(serverIPs.get(i));
+            connectServer(serverIPs[i]);
             rmi.replicate(events);
         
         }
@@ -205,6 +212,30 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
         gui.addStringAndUpdate("Server Updated");
         
     }
+
+    @Override
+    public boolean isRunning() throws RemoteException {
+        return true;
+    }
+
+    @Override
+    public String backonline(String s) throws RemoteException {
+        
+        if(getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(s)){
+        
+            em.setCurrentLeaderIp(s);
+        
+        }
+        System.out.println("Leader back online "+em.getCurrentLeaderIp());
+        return em.currentLeaderIp;
+    }
+    
+    private double getDoubleIPAddress(String ip){
+          
+        return Double.parseDouble(ip.replace(".", ""));
+    
+    }
+
 	
 }
 
