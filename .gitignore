@@ -241,3 +241,4 @@ pip-log.txt
 .mr.developer.cfg
 /RMIClient/nbproject/private/
 /RMIServer/nbproject/private/
+*.properties
