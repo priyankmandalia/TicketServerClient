@@ -31,7 +31,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
         static RMI rmi;
         ElectionManager em;
         
-        String serverIPs[]= {"148.197.27.144","148.197.27.146"};
+        String serverIPs[]= {"86.166.97.123","148.197.27.146"};
         
         public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException{
             
