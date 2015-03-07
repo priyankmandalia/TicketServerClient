@@ -31,7 +31,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
         static RMI rmi;
         ElectionManager em;
         
-        String serverIPs[]= {"86.166.97.123","148.197.27.146"};
+        String serverIPs[]= {"127.0.0.1","86.166.97.123"};
         
         public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException{
             
@@ -57,8 +57,16 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
         
         public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException{
         
-            Registry reg = LocateRegistry.createRegistry(port);
-            reg.rebind("server", new RMIServer());
+            
+             try {                    
+                            Registry reg = LocateRegistry.createRegistry(port);
+                            reg.rebind("server", new RMIServer());
+                            System.out.println("reg.rebind");
+                        } catch (RemoteException ex1) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                        } catch (NotBoundException ex1) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                        }
         
         }
         
@@ -221,13 +229,13 @@ public class RMIServer extends UnicastRemoteObject implements RMI{
     @Override
     public String backonline(String s) throws RemoteException {
         
-        if(getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(s)){
-        
-            em.setCurrentLeaderIp(s);
-        
-        }
-        System.out.println("Leader back online "+em.getCurrentLeaderIp());
-        return em.currentLeaderIp;
+//        if(getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(s)){
+//        
+//            em.setCurrentLeaderIp(s);
+//        
+//        }
+//        System.out.println("Leader back online "+em.getCurrentLeaderIp());
+        return "nah";
     }
     
     private double getDoubleIPAddress(String ip){

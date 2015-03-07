@@ -24,46 +24,64 @@ public class ElectionManager implements RMI{
     private RMI rmi;
     public String currentLeaderIp;
 
-    public String getCurrentLeaderIp() {
-        return currentLeaderIp;
-    }
-
-    public void setCurrentLeaderIp(String currentLeaderIp) {
-        this.currentLeaderIp = currentLeaderIp;
-    }
+//    public String getCurrentLeaderIp() {
+//        return currentLeaderIp;
+//    }
+//
+//    public void setCurrentLeaderIp(String currentLeaderIp) {
+//        this.currentLeaderIp = currentLeaderIp;
+//    }
     private final String ipaddresses[];
     private boolean isLeader;
     
     public ElectionManager( String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException{
                
         this.ipaddresses = ipaddresses;
-        //this.currentLeaderIp = getFirstLeader();
-       
-       String myIP = getMyIp();
-        for(int i = 0; i < ipaddresses.length; i++){
-        
-            if(!ipaddresses[i].matches(myIP)){
+        this.currentLeaderIp = getFirstLeader();
+         try {
+                        connectServer(this.currentLeaderIp);
+                        if(rmi.isRunning()){
                     
-                    connectServer(ipaddresses[i]);
-                    this.currentLeaderIp = rmi.backonline(myIP);
-            
-            }
+                            System.out.println("Main Leader is running");
+                    
+                        }
+        }catch (RemoteException ex) {
+                        try {                    
+                            startElection();
+                            System.out.println("Leader crashed or not running");
+                        } catch (RemoteException ex1) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                        } catch (NotBoundException ex1) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                        }
+                    
+                        } 
+         
+        String myIP = getMyIp();
         
-        }
         
-        if(this.currentLeaderIp == null){
+        if(this.currentLeaderIp == null){            //No other servers are available
         
             this.currentLeaderIp = myIP;
+            System.out.println("This Server is leader");
+            System.out.println("Leader is - " + currentLeaderIp);
         
         }
-        
-        if(!this.currentLeaderIp.matches(myIP)){
-        
+        else if(!this.currentLeaderIp.matches(myIP)){   //If I am not the server
+            
             checkLeader();
         
-        }else{System.out.println("This Server is leader");}
+        }
+       
+       
+//        for (String ipaddresse : ipaddresses) {
+//            if (!ipaddresse.matches(myIP)) {
+//                connectServer(ipaddresse);
+//                this.currentLeaderIp = rmi.backonline(myIP);
+//            }
+//        }
         
-        System.out.println("Leader is - " + currentLeaderIp);
+   
         
     }
     
@@ -100,7 +118,7 @@ public class ElectionManager implements RMI{
     
     }
     
-    private String getFirstLeader(){
+    private String getFirstLeader() {
     
         int index = 0;
         double highest = 0;
@@ -115,6 +133,8 @@ public class ElectionManager implements RMI{
             }
         
         }
+        
+             
         return ipaddresses[index];
     
     }
@@ -181,7 +201,15 @@ public class ElectionManager implements RMI{
     private void connectServer(String ipaddress) throws RemoteException, NotBoundException {
         Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
         
-        rmi = (RMI) reg.lookup("server");
+        
+        try {                    
+                            rmi = (RMI) reg.lookup("server");
+                            System.out.println("reg.lookup");
+                        } catch (RemoteException ex1) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                        } catch (NotBoundException ex1) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                        }
     }
     
     public static String getMyIp() throws MalformedURLException, IOException{
