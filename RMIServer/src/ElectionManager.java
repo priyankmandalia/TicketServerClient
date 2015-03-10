@@ -23,6 +23,15 @@ import java.util.logging.Logger;
 public class ElectionManager implements RMI{
     private RMI rmi;
     public String currentLeaderIp;
+    boolean heartbeat = true;
+
+    public boolean isHeartbeat() {
+        return heartbeat;
+    }
+
+    public void setHeartbeat(boolean heartbeat) {
+        this.heartbeat = heartbeat;
+    }
 
     public String getCurrentLeaderIp() {
         return currentLeaderIp;
@@ -103,6 +112,8 @@ public class ElectionManager implements RMI{
 //        connectServer(currentLeaderIp);
         Thread t = new Thread(new Runnable() {
 
+            int serversAlive;
+            
             @Override
             public void run() {
                 try{
@@ -114,35 +125,37 @@ public class ElectionManager implements RMI{
 
                     if (!ip.matches(myIP)) {
 
-                        while (!connectServer(ip)) {
+                        if(connectServer(ip)) {
 
-                           Thread.sleep(500);
-                            System.out.println("waiting to connect to - " + ip);
-
-                        }
+                         serversAlive++;
                         String comparedLeader = rmi.agreeLeader(myIP);
                         if (!currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
 
                             currentLeaderIp = comparedLeader;
 
                         }
+                      }
                     }
                 }
 
-                if (currentLeaderIp == null) {
+                if (serversAlive == 0) {
 
                     // election has gone wrong
                     System.out.println("Error, couldnt find leader");
+                    System.out.println("This server has assumed leader");
+                    heartbeat = false;
 
                 } else if (currentLeaderIp.matches(myIP)) {
 
                     // this is the leader
+                    heartbeat = false;
                     System.out.println("This Server is leader");
-                    System.out.println("Leader is - " + currentLeaderIp);
 
                 } else {
 
                     while (true) {
+                        
+                            if(heartbeat){
 
                         try {
 
@@ -168,6 +181,7 @@ public class ElectionManager implements RMI{
 
                         }
 
+                    }
                     }
 
                 }
