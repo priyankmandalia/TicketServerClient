@@ -99,8 +99,8 @@ public class ElectionManager implements RMI{
     
     private void go() throws RemoteException, NotBoundException, IOException, InterruptedException{
     
-        System.out.println("conneting to - " + currentLeaderIp);
-        connectServer(currentLeaderIp);
+//        System.out.println("conneting to - " + currentLeaderIp);
+//        connectServer(currentLeaderIp);
         
         // get own IP
         String myIP = getMyIp();
@@ -113,7 +113,7 @@ public class ElectionManager implements RMI{
                 while(!connectServer(ip)){
                 
                     Thread.sleep(500);
-                    System.out.println("waiting to connect");
+                    System.out.println("waiting to connect to - " + ip);
                 
                 }
                 String comparedLeader = rmi.agreeLeader(myIP);
