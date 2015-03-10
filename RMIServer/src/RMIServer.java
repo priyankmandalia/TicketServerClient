@@ -9,7 +9,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
 
 
 /*
@@ -31,13 +30,13 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     String serverIPs[] = {"148.197.40.156", "148.197.41.49"};
 
-    public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException {
+    public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
         startServer(Integer.parseInt(args[0]));
 
     }
 
-    public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException {
+    public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
         super();
 
@@ -52,7 +51,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     }
 
-    public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException {
+    public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
         try {
             Registry reg = LocateRegistry.createRegistry(port);

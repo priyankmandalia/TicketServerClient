@@ -34,7 +34,7 @@ public class ElectionManager implements RMI{
     private final String ipaddresses[];
     private boolean isLeader;
     
-    public ElectionManager( String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException{
+    public ElectionManager( String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException{
         
         this.ipaddresses = ipaddresses;
         // get the highest ip address and set as initial leader
@@ -47,7 +47,12 @@ public class ElectionManager implements RMI{
             
             if(!ip.matches(myIP)){
                 
-                while(!connectServer(ip)){/*wait*/}
+                while(!connectServer(ip)){
+                
+                    Thread.sleep(500);
+                    System.out.println("waiting to connect");
+                
+                }
                 String comparedLeader = rmi.agreeLeader(myIP);
                 if (!this.currentLeaderIp.matches(comparedLeader)) {
 
