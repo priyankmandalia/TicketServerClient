@@ -23,66 +23,33 @@ import java.util.logging.Logger;
 public class ElectionManager implements RMI{
     private RMI rmi;
     public String currentLeaderIp;
+    boolean heartbeat = true;
 
-//    public String getCurrentLeaderIp() {
-//        return currentLeaderIp;
-//    }
-//
-//    public void setCurrentLeaderIp(String currentLeaderIp) {
-//        this.currentLeaderIp = currentLeaderIp;
-//    }
+    public boolean isHeartbeat() {
+        return heartbeat;
+    }
+
+    public void setHeartbeat(boolean heartbeat) {
+        this.heartbeat = heartbeat;
+    }
+
+    public String getCurrentLeaderIp() {
+        return currentLeaderIp;
+    }
+
+    public void setCurrentLeaderIp(String currentLeaderIp) {
+        this.currentLeaderIp = currentLeaderIp;
+    }
     private final String ipaddresses[];
     private boolean isLeader;
     
-    public ElectionManager( String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException{
-               
+    public ElectionManager( String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException{
+        
         this.ipaddresses = ipaddresses;
+        // get the highest ip address and set as initial leader
         this.currentLeaderIp = getFirstLeader();
-         try {
-                        connectServer(this.currentLeaderIp);
-                        if(rmi.isRunning()){
-                    
-                            System.out.println("Main Leader is running");
-                    
-                        }
-        }catch (RemoteException ex) {
-                        try {                    
-                            startElection();
-                            System.out.println("Leader crashed or not running");
-                        } catch (RemoteException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        } catch (NotBoundException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        }
-                    
-                        } 
-         
-        String myIP = getMyIp();
         
-        
-        if(this.currentLeaderIp == null){            //No other servers are available
-        
-            this.currentLeaderIp = myIP;
-            System.out.println("This Server is leader");
-            System.out.println("Leader is - " + currentLeaderIp);
-        
-        }
-        else if(!this.currentLeaderIp.matches(myIP)){   //If I am not the server
-            
-            checkLeader();
-        
-        }
-       
-       
-//        for (String ipaddresse : ipaddresses) {
-//            if (!ipaddresse.matches(myIP)) {
-//                connectServer(ipaddresse);
-//                this.currentLeaderIp = rmi.backonline(myIP);
-//            }
-//        }
-        
-   
-        
+        go();
     }
     
     private double getDoubleIPAddress(String ip){
@@ -92,9 +59,9 @@ public class ElectionManager implements RMI{
     }
     
     @Override
-    public String backonline(String s){
+    public String agreeLeader(String senderIP){
         
-        return "nah";
+        return "only agreeleader in rmiserver should be called";
         
     
     }
@@ -139,77 +106,121 @@ public class ElectionManager implements RMI{
     
     }
     
-    private void checkLeader() throws RemoteException, NotBoundException{
-    
-        System.out.println("conneting to - " + currentLeaderIp);
-        connectServer(currentLeaderIp);
+    private void go() throws RemoteException, NotBoundException, IOException, InterruptedException {
+
+//        System.out.println("conneting to - " + currentLeaderIp);
+//        connectServer(currentLeaderIp);
         Thread t = new Thread(new Runnable() {
 
+            int serversAlive;
+            
             @Override
             public void run() {
-                while(true){
-                
-                    try {
-                        
-                        if(rmi.isRunning()){
-                    
-                            System.out.println("Leader is running");
-                    
-                        }
-                        
-                        Thread.sleep(2000);
-                        
-                        } catch (RemoteException ex) {
-                        try {                    
-                            startElection();
-                            System.out.println("Leader crashed");
-                        } catch (RemoteException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        } catch (NotBoundException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        }
-                    
-                        } catch(InterruptedException ex){
-                            
-                        
-                        }
-                    
-                
-                }
-                
-                
-            }
+                try{
+                // get own IP
+                String myIP = getMyIp();
+                // loop through all other ip's, connect and compare own ip with their leader ip
+                // to check if this server needs to bully
+                for (String ip : ipaddresses) {
 
-           
-        });
-        t.start();
+                    if (!ip.matches(myIP)) {
+
+                        if(connectServer(ip)) {
+
+                         serversAlive++;
+                        String comparedLeader = rmi.agreeLeader(myIP);
+                        if (!currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
+
+                            currentLeaderIp = comparedLeader;
+
+                        }
+                      }
+                    }
+                }
+                System.out.println(serversAlive);
+                System.out.println(currentLeaderIp);
+                System.out.println(heartbeat);
+                if (serversAlive == 0) {
+
+                    // election has gone wrong
+                    System.out.println("Error, couldnt find leader");
+                    System.out.println("This server has assumed leader");
+                    currentLeaderIp = myIP;
+                    heartbeat = false;
+
+                } else if (currentLeaderIp.matches(myIP)) {
+
+                    // this is the leader
+                    heartbeat = false;
+                    System.out.println("This Server is leader");
+
+                }
+
+                    while (true) {
+                        
+                            if(heartbeat){
+
+                        try {
+                            System.out.println("inside heartbeat");
+                            if (rmi.isRunning()) {
+                                System.out.println("inside is alive");
+                                System.out.println("Leader "+currentLeaderIp+" is running");
+
+                            }
+
+                            Thread.sleep(2000);
+                            System.out.println("slept");
+                        } catch (RemoteException ex) {
+                            try {
+                                getRunnerUp();
+                                System.out.println("Leader crashed");
+                            } catch (RemoteException ex1) {
+                                Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                            } catch (NotBoundException ex1) {
+                                Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
+
+                        } catch (InterruptedException ex) {
+
+                        }
+
+                    }
+                    
+
+                }
+
+            }
+        catch(Exception e){
+            
+            
+            
+        }}});
+        t.start ();
     
     }
     
-    private void startElection() throws RemoteException, NotBoundException {
+    private void getRunnerUp() throws RemoteException, NotBoundException {
                 
                 currentLeaderIp = getNextLeader(currentLeaderIp);
                 connectServer(currentLeaderIp);
-                if(rmi.isRunning()){
-                    System.out.println("Connected to " + currentLeaderIp);
-                    Logger.getLogger(ElectionManager.class.getName()).log(Level.FINE, null, "Connected to " + currentLeaderIp);
-                
-                }
                 
     }
     
-    private void connectServer(String ipaddress) throws RemoteException, NotBoundException {
-        Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
+    public boolean connectServer(String ipaddress) throws RemoteException, NotBoundException {
         
+        try {
+            
+            Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
+            rmi = (RMI) reg.lookup("server");
+            System.out.println("rmi found");
+            return true;
         
-        try {                    
-                            rmi = (RMI) reg.lookup("server");
-                            System.out.println("reg.lookup");
-                        } catch (RemoteException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        } catch (NotBoundException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        }
+        } catch(RemoteException | NotBoundException e){
+        
+            System.out.println(e.getMessage());
+            return false;
+        
+        }
     }
     
     public static String getMyIp() throws MalformedURLException, IOException{

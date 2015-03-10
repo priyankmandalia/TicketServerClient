@@ -34,7 +34,7 @@ public interface RMI extends Remote{
         
         public boolean isRunning() throws RemoteException;
         
-        public String backonline(String s) throws RemoteException;
+        public String agreeLeader(String s) throws RemoteException;
         
         
 }
