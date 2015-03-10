@@ -160,15 +160,15 @@ public class ElectionManager implements RMI{
                             if(heartbeat){
 
                         try {
-
+                            System.out.println("inside heartbeat");
                             if (rmi.isRunning()) {
-
+                                System.out.println("inside is alive");
                                 System.out.println("Leader "+currentLeaderIp+" is running");
 
                             }
 
                             Thread.sleep(2000);
-
+                            System.out.println("slept");
                         } catch (RemoteException ex) {
                             try {
                                 getRunnerUp();
