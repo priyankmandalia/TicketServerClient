@@ -46,8 +46,8 @@ public class ElectionManager implements RMI{
         for(String ip : ipaddresses){
             
             if(!ip.matches(myIP)){
-            
-                connectServer(ip);
+                
+                while(!connectServer(ip)){/*wait*/}
                 String comparedLeader = rmi.agreeLeader(myIP);
                 if (!this.currentLeaderIp.matches(comparedLeader)) {
 
@@ -194,18 +194,20 @@ public class ElectionManager implements RMI{
                 
     }
     
-    private void connectServer(String ipaddress) throws RemoteException, NotBoundException {
-        Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
+    private boolean connectServer(String ipaddress) throws RemoteException, NotBoundException {
         
+        try {
+            
+            Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
+            rmi = (RMI) reg.lookup("server");
+            System.out.println("reg.lookup");
+            return true;
         
-        try {                    
-                            rmi = (RMI) reg.lookup("server");
-                            System.out.println("reg.lookup");
-                        } catch (RemoteException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        } catch (NotBoundException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        }
+        } catch(RemoteException | NotBoundException e){
+        
+            return false;
+        
+        }
     }
     
     public static String getMyIp() throws MalformedURLException, IOException{
