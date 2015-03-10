@@ -24,64 +24,60 @@ public class ElectionManager implements RMI{
     private RMI rmi;
     public String currentLeaderIp;
 
-//    public String getCurrentLeaderIp() {
-//        return currentLeaderIp;
-//    }
-//
-//    public void setCurrentLeaderIp(String currentLeaderIp) {
-//        this.currentLeaderIp = currentLeaderIp;
-//    }
+    public String getCurrentLeaderIp() {
+        return currentLeaderIp;
+    }
+
+    public void setCurrentLeaderIp(String currentLeaderIp) {
+        this.currentLeaderIp = currentLeaderIp;
+    }
     private final String ipaddresses[];
     private boolean isLeader;
     
     public ElectionManager( String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException{
-               
+        
         this.ipaddresses = ipaddresses;
+        // get the highest ip address and set as initial leader
         this.currentLeaderIp = getFirstLeader();
-         try {
-                        connectServer(this.currentLeaderIp);
-                        if(rmi.isRunning()){
-                    
-                            System.out.println("Main Leader is running");
-                    
-                        }
-        }catch (RemoteException ex) {
-                        try {                    
-                            startElection();
-                            System.out.println("Leader crashed or not running");
-                        } catch (RemoteException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        } catch (NotBoundException ex1) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                        }
-                    
-                        } 
-         
+        // get own IP
         String myIP = getMyIp();
+        // loop through all other ip's, connect and compare own ip with their leader ip
+        // to check if this server needs to bully
+        for(String ip : ipaddresses){
+            
+            if(!ip.matches(myIP)){
+            
+                connectServer(ip);
+                String comparedLeader = rmi.agreeLeader(myIP);
+                if (!this.currentLeaderIp.matches(comparedLeader)) {
+
+                    this.currentLeaderIp = comparedLeader;
+
+                }
+            
+            }
+            
+        }
+         
+        if(this.currentLeaderIp == null){ 
+            
+            // election has gone wrong
+            System.out.println("Error, couldnt find leader");
+            
         
+        }else if(this.currentLeaderIp.matches(myIP)){
         
-        if(this.currentLeaderIp == null){            //No other servers are available
-        
-            this.currentLeaderIp = myIP;
+            // this is the leader
             System.out.println("This Server is leader");
             System.out.println("Leader is - " + currentLeaderIp);
         
-        }
-        else if(!this.currentLeaderIp.matches(myIP)){   //If I am not the server
+        }else{  
             
+            // election succeeded, this is not leader
+            // start heartbeat
             checkLeader();
         
-        }
-       
-       
-//        for (String ipaddresse : ipaddresses) {
-//            if (!ipaddresse.matches(myIP)) {
-//                connectServer(ipaddresse);
-//                this.currentLeaderIp = rmi.backonline(myIP);
-//            }
-//        }
-        
-   
+        } 
         
     }
     
@@ -92,9 +88,9 @@ public class ElectionManager implements RMI{
     }
     
     @Override
-    public String backonline(String s){
+    public String agreeLeader(String senderIP){
         
-        return "nah";
+        return "only agreeleader in rmiserver should be called";
         
     
     }
