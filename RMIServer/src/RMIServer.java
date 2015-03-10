@@ -226,12 +226,12 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         if (getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
 
             em.setCurrentLeaderIp(senderIP);
-            em.setHeartbeat(true);
             try {
                 em.connectServer(senderIP);
             } catch (NotBoundException ex) {
                 Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
             }
+            em.setHeartbeat(true);
 
         }
         

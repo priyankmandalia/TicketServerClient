@@ -137,7 +137,9 @@ public class ElectionManager implements RMI{
                       }
                     }
                 }
-
+                System.out.println(serversAlive);
+                System.out.println(currentLeaderIp);
+                System.out.println(heartbeat);
                 if (serversAlive == 0) {
 
                     // election has gone wrong
@@ -169,7 +171,7 @@ public class ElectionManager implements RMI{
 
                         } catch (RemoteException ex) {
                             try {
-                                startElection();
+                                getRunnerUp();
                                 System.out.println("Leader crashed");
                             } catch (RemoteException ex1) {
                                 Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
@@ -196,15 +198,10 @@ public class ElectionManager implements RMI{
     
     }
     
-    private void startElection() throws RemoteException, NotBoundException {
+    private void getRunnerUp() throws RemoteException, NotBoundException {
                 
                 currentLeaderIp = getNextLeader(currentLeaderIp);
                 connectServer(currentLeaderIp);
-                if(rmi.isRunning()){
-                    System.out.println("Connected to " + currentLeaderIp);
-                    Logger.getLogger(ElectionManager.class.getName()).log(Level.FINE, null, "Connected to " + currentLeaderIp);
-                
-                }
                 
     }
     
