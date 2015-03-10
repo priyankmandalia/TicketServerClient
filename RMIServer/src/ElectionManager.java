@@ -145,6 +145,7 @@ public class ElectionManager implements RMI{
                     // election has gone wrong
                     System.out.println("Error, couldnt find leader");
                     System.out.println("This server has assumed leader");
+                    currentLeaderIp = myIP;
                     heartbeat = false;
 
                 } else if (currentLeaderIp.matches(myIP)) {
