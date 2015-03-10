@@ -151,7 +151,7 @@ public class ElectionManager implements RMI{
                     heartbeat = false;
                     System.out.println("This Server is leader");
 
-                } else {
+                }
 
                     while (true) {
                         
@@ -182,7 +182,7 @@ public class ElectionManager implements RMI{
                         }
 
                     }
-                    }
+                    
 
                 }
 
@@ -208,7 +208,7 @@ public class ElectionManager implements RMI{
                 
     }
     
-    private boolean connectServer(String ipaddress) throws RemoteException, NotBoundException {
+    public boolean connectServer(String ipaddress) throws RemoteException, NotBoundException {
         
         try {
             

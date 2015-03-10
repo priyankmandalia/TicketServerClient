@@ -222,10 +222,16 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public String agreeLeader(String senderIP) throws RemoteException {
 
+       
         if (getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
 
             em.setCurrentLeaderIp(senderIP);
             em.setHeartbeat(true);
+            try {
+                em.connectServer(senderIP);
+            } catch (NotBoundException ex) {
+                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
         }
         
