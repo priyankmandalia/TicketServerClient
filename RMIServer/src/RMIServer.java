@@ -221,17 +221,19 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public String agreeLeader(String senderIP) throws RemoteException {
-
+        System.out.println("agree run");
        
         if (getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
-
+            System.out.println("caller is higher");
             em.setCurrentLeaderIp(senderIP);
             try {
                 em.connectServer(senderIP);
+                System.out.println("connected to new leader");
             } catch (NotBoundException ex) {
                 Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
             }
             em.setHeartbeat(true);
+            System.out.println("beat true");
 
         }
         
