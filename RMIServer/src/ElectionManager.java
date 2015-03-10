@@ -97,56 +97,51 @@ public class ElectionManager implements RMI{
     
     }
     
-    private void go() throws RemoteException, NotBoundException, IOException, InterruptedException{
-    
+    private void go() throws RemoteException, NotBoundException, IOException, InterruptedException {
+
 //        System.out.println("conneting to - " + currentLeaderIp);
 //        connectServer(currentLeaderIp);
-        
-        // get own IP
-        String myIP = getMyIp();
-        // loop through all other ip's, connect and compare own ip with their leader ip
-        // to check if this server needs to bully
-        for(String ip : ipaddresses){
-            
-            if(!ip.matches(myIP)){
-                
-                while(!connectServer(ip)){
-                
-                    Thread.sleep(500);
-                    System.out.println("waiting to connect to - " + ip);
-                
+        Thread t = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try{
+                // get own IP
+                String myIP = getMyIp();
+                // loop through all other ip's, connect and compare own ip with their leader ip
+                // to check if this server needs to bully
+                for (String ip : ipaddresses) {
+
+                    if (!ip.matches(myIP)) {
+
+                        while (!connectServer(ip)) {
+
+                           Thread.sleep(500);
+                            System.out.println("waiting to connect to - " + ip);
+
+                        }
+                        String comparedLeader = rmi.agreeLeader(myIP);
+                        if (!currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
+
+                            currentLeaderIp = comparedLeader;
+
+                        }
+                    }
                 }
-                String comparedLeader = rmi.agreeLeader(myIP);
-                if (!this.currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
 
-                    this.currentLeaderIp = comparedLeader;
+                if (currentLeaderIp == null) {
 
-                }
-            
-            }
-            
-        }
-         
-        if(this.currentLeaderIp == null){ 
-            
-            // election has gone wrong
-            System.out.println("Error, couldnt find leader");
-            
-        
-        }else if(this.currentLeaderIp.matches(myIP)){
-        
-            // this is the leader
-            System.out.println("This Server is leader");
-            System.out.println("Leader is - " + currentLeaderIp);
-        
-        }else{  
-            
-            // election succeeded, this is not leader
-            // start heartbeat
-            Thread t = new Thread(new Runnable() {
+                    // election has gone wrong
+                    System.out.println("Error, couldnt find leader");
 
-                @Override
-                public void run() {
+                } else if (currentLeaderIp.matches(myIP)) {
+
+                    // this is the leader
+                    System.out.println("This Server is leader");
+                    System.out.println("Leader is - " + currentLeaderIp);
+
+                } else {
+
                     while (true) {
 
                         try {
@@ -177,9 +172,13 @@ public class ElectionManager implements RMI{
 
                 }
 
-            });
-            t.start();
-        }
+            }
+        catch(Exception e){
+            
+            
+            
+        }}});
+        t.start ();
     
     }
     
