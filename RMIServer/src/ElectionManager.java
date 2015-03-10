@@ -117,7 +117,7 @@ public class ElectionManager implements RMI{
                 
                 }
                 String comparedLeader = rmi.agreeLeader(myIP);
-                if (!this.currentLeaderIp.matches(comparedLeader)) {
+                if (!this.currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
 
                     this.currentLeaderIp = comparedLeader;
 
