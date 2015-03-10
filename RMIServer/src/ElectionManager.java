@@ -148,7 +148,7 @@ public class ElectionManager implements RMI{
 
                             if (rmi.isRunning()) {
 
-                                System.out.println("Leader is running");
+                                System.out.println("Leader "+currentLeaderIp+" is running");
 
                             }
 
