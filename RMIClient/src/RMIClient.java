@@ -53,7 +53,7 @@ public class RMIClient extends JFrame{
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
     static String ServerIPAddress = "127.0.0.1";//loopback
-    public static String listIP[] = {"109.152.211.4","127.0.0.1","148.197.40.156", "109.152.211.4"};
+    public static String listIP[] = {"109.152.211.4","127.0.0.1"};
     public static String NewServer;
     private static int i = -1;
             
