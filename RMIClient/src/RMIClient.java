@@ -412,11 +412,13 @@ public class RMIClient extends JFrame{
            	 
                
            	  try {
-				rmi.addEvent(eventname.getText().toString(), description.getText().toString());
+				rmi.addEvent(eventname.getText(), description.getText());
 			} catch (RemoteException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
-			}
+			} catch (NotBoundException ex) {
+                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                 }
            	  
              }
            });
