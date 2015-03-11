@@ -16,6 +16,9 @@ import javax.swing.JFrame;
  */
 public interface RMI extends Remote{
     
+        public static final boolean REPLICA = true;
+        public static final boolean PARTITION = false;
+    
         public String getData(String text) throws RemoteException;
         
         public ArrayList<String> searchEvents(String query) throws RemoteException;
@@ -34,7 +37,7 @@ public interface RMI extends Remote{
         
         public boolean isRunning() throws RemoteException;
         
-        public String agreeLeader(String s) throws RemoteException;
+        public String agreeLeader(String senderIP, boolean replicaOrPartition) throws RemoteException;
         
         public String[] getIPaddresses() throws RemoteException;
         

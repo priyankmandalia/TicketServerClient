@@ -25,10 +25,12 @@ public class ElectionManager {
     private String currentLeaderIp;
     boolean heartbeat = true;
     private final String ipaddresses[];
+    private final boolean replicaOrPartition;
 
-    public ElectionManager(String[] ipaddresses) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
+    public ElectionManager(String[] ipaddresses, boolean replicaOrPartition) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
         this.ipaddresses = ipaddresses;
+        this.replicaOrPartition = replicaOrPartition;
         // get the highest ip address and set as initial leader
         this.currentLeaderIp = getFirstLeader();
 
@@ -56,7 +58,7 @@ public class ElectionManager {
                             if (connectServer(ip)) {
 
                                 serversAlive++;
-                                String comparedLeader = rmi.agreeLeader(myIP);
+                                String comparedLeader = rmi.agreeLeader(myIP, replicaOrPartition);
                                 if (!currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
 
                                     currentLeaderIp = comparedLeader;

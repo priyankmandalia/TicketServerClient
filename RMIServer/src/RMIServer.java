@@ -26,9 +26,10 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     Color purple = new Color(78, 49, 104);
     GUI gui;
     static RMI rmi;
-    ElectionManager em;
+    ElectionManager replicaManager, partitionManager;
 
-    String serverIPs[] = {"148.197.40.156", "109.152.211.4"};
+    String replicaIPs[] = {"148.197.40.156", "109.152.211.4"};
+    String partitionIPs[] = {"148.197.40.156", "109.152.211.4"};
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
@@ -47,7 +48,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         gui = new GUI("RMI Server");
 
-        em = new ElectionManager(serverIPs);
+        replicaManager = new ElectionManager(replicaIPs, RMI.REPLICA);
+        partitionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
 
     }
 
@@ -188,11 +190,11 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     public void updateServers() throws RemoteException, NotBoundException {
 
-        for (int i = 0; i < serverIPs.length; i++) {
-
-            connectServer(serverIPs[i]);
+        for (String replicaIP : replicaIPs) {
+            
+            connectServer(replicaIP);
             rmi.replicate(events);
-
+            
         }
 
     }
@@ -220,24 +222,41 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public String agreeLeader(String senderIP) throws RemoteException {
-        System.out.println("agree run");
-       
-        if (getDoubleIPAddress(em.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
-            System.out.println("caller is higher");
-            em.setCurrentLeaderIp(senderIP);
-            try {
-                em.connectServer(senderIP);
-                System.out.println("connected to new leader");
-            } catch (NotBoundException ex) {
-                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+    public String agreeLeader(String senderIP, boolean repicaOrPartition) throws RemoteException {
+        
+        // check weather incoming request is asking to agree on 
+        // replica leader or partition leader
+        if (repicaOrPartition) {
+            
+            if (getDoubleIPAddress(replicaManager.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
+                
+                replicaManager.setCurrentLeaderIp(senderIP);
+                try {
+                    replicaManager.connectServer(senderIP);
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                replicaManager.setHeartbeat(true);
+
             }
-            em.setHeartbeat(true);
-            System.out.println("beat true");
+            
+        } else {
+
+            if (getDoubleIPAddress(partitionManager.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
+                
+                partitionManager.setCurrentLeaderIp(senderIP);
+                try {
+                    partitionManager.connectServer(senderIP);
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                partitionManager.setHeartbeat(true);
+
+            }
 
         }
         
-        return em.getCurrentLeaderIp();
+        return replicaManager.getCurrentLeaderIp();
     }
 
     private double getDoubleIPAddress(String ip) {
@@ -251,7 +270,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         
          gui.addStringAndUpdate("List of Server IP Addresses returned");
         
-        return serverIPs;
+        return replicaIPs;
     }
 
 }
