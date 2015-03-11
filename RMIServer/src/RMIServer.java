@@ -41,6 +41,22 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         startServer(Integer.parseInt(args[0]));
 
     }
+    
+    public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
+
+        // java rmi server binding flow, using this class
+        // as its a sub class of unicast remote object
+        try {
+            Registry reg = LocateRegistry.createRegistry(port);
+            reg.rebind("server", new RMIServer());
+            System.out.println("reg.rebind");
+        } catch (RemoteException ex1) {
+            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+        } catch (NotBoundException ex1) {
+            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+        }
+
+    }
 
     public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
@@ -59,21 +75,87 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
 
     }
+    
+    public static String getMyIp() throws MalformedURLException, IOException {
 
-    public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
-
-        try {
-            Registry reg = LocateRegistry.createRegistry(port);
-            reg.rebind("server", new RMIServer());
-            System.out.println("reg.rebind");
-        } catch (RemoteException ex1) {
-            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-        } catch (NotBoundException ex1) {
-            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-        }
+        URL whatismyip = new URL("http://checkip.amazonaws.com/");
+        BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+        //you get the IP as a String
+        String ip = in.readLine();
+        return ip;
 
     }
 
+    private Event getEventByExactName(String event) {
+        
+        // loop through events and compare titles exactly to the input string
+        gui.addStringAndUpdate("Precise event queried: " + event);
+        Event result = null;
+        for (Event eventi : events) {
+
+            String title = eventi.getTitle();
+            System.out.println(title);
+            if (title.matches(event)) {
+
+                result = eventi;
+
+            }
+        }
+        return result;
+    }
+    
+    
+    private String getMaxStorageServer() throws RemoteException, NotBoundException {
+        
+        int lowest = -1;
+        int amountOfEvents = 0;
+        String resultIP = null;
+        // loop throgh all other partitions, return the 
+        // one with the least records
+        for(String ip : partitionIPs){
+        
+            connectServer(ip);
+            amountOfEvents = rmi.getNumberOfEvents();
+            if(amountOfEvents < lowest || lowest < 0){
+            
+                lowest = amountOfEvents;
+                resultIP = ip;
+            
+            }
+        
+        }
+        
+        return resultIP;
+    }
+    
+    public void updateReplicas() throws RemoteException, NotBoundException {
+        
+        // loop through replicas and replicate own events
+        for (String replicaIP : replicaIPs) {
+            
+            connectServer(replicaIP);
+            rmi.replicate(events);
+            
+        }
+
+    }
+    
+    private static void connectServer(String ip) throws RemoteException, NotBoundException {
+
+        // java rmi connect flow
+        Registry reg = LocateRegistry.getRegistry(ip, 1099);
+        rmi = (RMI) reg.lookup("server");
+
+    }
+    
+    private double getDoubleIPAddress(String ip) {
+
+        return Double.parseDouble(ip.replace(".", ""));
+
+    }
+    
+    //*********************RMI METHODS*********************
+    
     @Override
     public String getData(String text) throws RemoteException {
 
@@ -107,7 +189,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         return results;
 
     }
-
+    
     @Override
     public ArrayList<String> getBookings(String event) {
 
@@ -133,58 +215,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     }
 
-    private Event getEventByExactName(String event) {
-
-        gui.addStringAndUpdate("Precise event queried: " + event);
-        Event result = null;
-        for (Event eventi : events) {
-
-            String title = eventi.getTitle();
-            System.out.println(title);
-            if (title.matches(event)) {
-
-                result = eventi;
-
-            }
-        }
-        return result;
-    }
-    
-    public static String getMyIp() throws MalformedURLException, IOException {
-
-        URL whatismyip = new URL("http://checkip.amazonaws.com/");
-        BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
-        //you get the IP as a String
-        String ip = in.readLine();
-        return ip;
-
-    }
-    
-    private String getMaxStorageServer() throws RemoteException, NotBoundException {
-        
-        int lowest = -1;
-        int amountOfEvents = 0;
-        String resultIP = null;
-        // loop throgh all other partitions, return the 
-        // one with the least records
-        for(String ip : partitionIPs){
-        
-            connectServer(ip);
-            amountOfEvents = rmi.getNumberOfEvents();
-            if(amountOfEvents < lowest || lowest < 0){
-            
-                lowest = amountOfEvents;
-                resultIP = ip;
-            
-            }
-        
-        }
-        
-        return resultIP;
-    }
-    
-    //*********************RMI METHODS*********************
-
     @Override
     public ArrayList<String> getEvents() {
 
@@ -203,6 +233,10 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public boolean addEvent(String name, String description) throws RemoteException, NotBoundException{
+        
+        // get the server with the least event records, then
+        // then if it is another server, call that servers addEvent method
+        // with the same imput params.
         String maxStorageServer = getMaxStorageServer();
         if (maxStorageServer.matches(myIP)) {
 
@@ -219,6 +253,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         
             connectServer(maxStorageServer);
             rmi.addEvent(name, description);
+            gui.addStringAndUpdate("event re routed, to be added in - " + maxStorageServer);
         
         }
 
@@ -236,24 +271,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         gui.addStringAndUpdate("List of servers returned");
 
         return result;
-
-    }
-
-    public void updateReplicas() throws RemoteException, NotBoundException {
-
-        for (String replicaIP : replicaIPs) {
-            
-            connectServer(replicaIP);
-            rmi.replicate(events);
-            
-        }
-
-    }
-
-    private static void connectServer(String ip) throws RemoteException, NotBoundException {
-
-        Registry reg = LocateRegistry.getRegistry(ip, 1099);
-        rmi = (RMI) reg.lookup("server");
 
     }
 
@@ -306,12 +323,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         }
         
         return replicaElectionManager.getCurrentLeaderIp();
-    }
-
-    private double getDoubleIPAddress(String ip) {
-
-        return Double.parseDouble(ip.replace(".", ""));
-
     }
 
     @Override
