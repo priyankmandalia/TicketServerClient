@@ -53,6 +53,8 @@ public class RMIClient extends JFrame{
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
     static String ServerIPAddress = "127.0.0.1";//loopback
+    public static String listIP[];
+            
     public static void main(String args[]) throws RemoteException, NotBoundException{
     
         connectServer();
@@ -67,6 +69,8 @@ public class RMIClient extends JFrame{
         rmi = (RMI) reg.lookup("server");
         String text = rmi.getData("output");
         System.out.println(text);
+        listIP = rmi.getIPaddresses();
+        
   //    ArrayList<String> events = rmi.searchEvents("Priyank");
   //    System.out.println(events);
         
@@ -443,14 +447,16 @@ public class RMIClient extends JFrame{
         textpanel.setSize(200, 380);
    //   listData = rmi.getServers();//use this in future
 
-        String listData[] = {
-                "148.197.27.152",
-                "148.197.27.153",
-                "148.197.27.154",
-                "148.197.27.155",
-                "148.197.27.156"
-            };
-        addresslist = new JList(listData);
+//        String listIP[] = {
+//                "127.0.0.1",
+//                "148.197.27.153",
+//                "148.197.27.154",
+//                "148.197.27.155",
+//                "148.197.27.156"
+//            };
+        
+        
+        addresslist = new JList(listIP);
    //     listbox = new JList(listData);
         addresslist.setBackground(Color.white);
         addresslist.setFont(font);

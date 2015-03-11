@@ -36,6 +36,8 @@ public interface RMI extends Remote{
         
         public String agreeLeader(String s) throws RemoteException;
         
+        public String[] getIPaddresses() throws RemoteException;
+        
         
 }
 
