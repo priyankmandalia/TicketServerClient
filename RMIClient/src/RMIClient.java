@@ -131,7 +131,7 @@ public class RMIClient extends JFrame{
      return s;
      }
      
-     //Add loads of all the server in hasgmap
+     //Adds amount of loads of all the server in hashmap
      private static void getnumberOfClientsConn() throws RemoteException, NotBoundException{
       int count;
       for(int i = 0 ;i < listIP.length-1;i++ ){
@@ -148,7 +148,7 @@ public class RMIClient extends JFrame{
       
          
      }
-     //Get Server with least load
+     //Get Server IP with least amount of load
       private static String getServerWithLeastLoad(){
       
       
@@ -457,9 +457,9 @@ public class RMIClient extends JFrame{
            	 
                
            	  try {
-                                getnumberOfClientsConn();
+                                getnumberOfClientsConn();            
                                 String IP = getServerWithLeastLoad();
-                                connectServer(IP);//Connects with server with least amount of load
+                                connectServer(IP);                   //Connects with server with least amount of load
 				rmi.addEvent(eventname.getText(), description.getText());
 			} catch (RemoteException e1) {
 				// TODO Auto-generated catch block
