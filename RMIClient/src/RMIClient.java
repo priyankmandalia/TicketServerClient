@@ -53,34 +53,80 @@ public class RMIClient extends JFrame{
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
     static String ServerIPAddress = "127.0.0.1";//loopback
-    public static String listIP[];
+    public static String listIP[] = {"109.152.211.4","127.0.0.1","148.197.40.156", "109.152.211.4"};
+    public static String NewServer;
+    private static int i = -1;
             
     public static void main(String args[]) throws RemoteException, NotBoundException{
     
-        connectServer();
+        connectServer(ServerIPAddress);
         RMIClient obj = new RMIClient();
         
     
     }
 
-    private static void connectServer() throws RemoteException, NotBoundException {
-        
-        Registry reg = LocateRegistry.getRegistry(ServerIPAddress, 1099);
-        rmi = (RMI) reg.lookup("server");
-        String text = rmi.getData("output");
-        System.out.println(text);
-        listIP = rmi.getIPaddresses();
+    private static void connectServer(String IPaddress) throws RemoteException, NotBoundException {
+         
+        try {
+                            System.out.println("Inside connectServer");
+                            Registry reg = LocateRegistry.getRegistry(IPaddress, 1099);
+                            rmi = (RMI) reg.lookup("server");
+                            String text = rmi.getData("output");
+                            System.out.println(text);
+                            listIP = rmi.getIPaddresses();
+                            if (rmi.isRunning()) {
+                                System.out.println("Connected to default server");
+                               
+                            }
+
+                        } catch (RemoteException ex) {
+                            try {
+                                getRunnerUp();
+                                System.out.println("Leader crashed");
+                            } catch (RemoteException ex1) {
+                                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
+                            } catch (NotBoundException ex1) {
+                                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
+
+                        } 
         
   //    ArrayList<String> events = rmi.searchEvents("Priyank");
   //    System.out.println(events);
         
     }
-    
+     private static void getRunnerUp() throws RemoteException, NotBoundException {
+                
+                NewServer = getNextServer();
+                connectServer(NewServer);
+                System.out.println("NewServer IP: "+NewServer);
+                
+    }
+     
+     private static String getNextServer(){
+         
+         
+         if(i < listIP.length-1){
+         i++;
+         }
+         else{
+         i=0;
+         }
+         System.out.println("List length: "+listIP.length);
+         System.out.println("Index: "+i);
+         String s = listIP[i];
+         
+         
+         
+     
+     
+     return s;
+     }
       public RMIClient() throws RemoteException, NotBoundException {
 
            initTabs();
         
-           this.connectServer();
+           this.connectServer(ServerIPAddress);
             
             
         this.setSize(1000, 500);
@@ -423,7 +469,7 @@ public class RMIClient extends JFrame{
              {
                    try {
                        //To Do
-                  connectServer();
+                  connectServer(ServerIPAddress);
                   listData = rmi.getEvents();
                    } catch (RemoteException ex) {
                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
