@@ -11,12 +11,15 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
@@ -29,6 +32,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.RowFilter.Entry;
 import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -56,6 +60,9 @@ public class RMIClient extends JFrame{
     public static String listIP[] = {"109.152.211.4","127.0.0.1"};
     public static String NewServer;
     private static int i = -1;
+    private static int loadbalancenumber;
+    
+    private static Map<String, Integer> map = new HashMap<String, Integer>();
             
     public static void main(String args[]) throws RemoteException, NotBoundException{
     
@@ -74,6 +81,7 @@ public class RMIClient extends JFrame{
                             String text = rmi.getData("output");
                             System.out.println(text);
                             listIP = rmi.getIPaddresses();
+                            //getnumberOfClientsConn();
                             if (rmi.isRunning()) {
                                 System.out.println("Connected to default server");
                                
@@ -122,6 +130,43 @@ public class RMIClient extends JFrame{
      
      return s;
      }
+     
+     //Add loads of all the server in hasgmap
+     private static void getnumberOfClientsConn() throws RemoteException, NotBoundException{
+      int count;
+      for(int i = 0 ;i < listIP.length-1;i++ ){
+      String s = listIP[i];
+      connectServer(s);
+      count = rmi.getNumberOfConnections();
+      System.out.println("Server "+i+": "+s);
+      System.out.println("Number of Connections: "+rmi.getNumberOfConnections());
+      
+      
+      map.put(s, count);
+      
+      }
+      
+         
+     }
+     //Get Server with least load
+      private static String getServerWithLeastLoad(){
+      
+      
+        String ServerIP = "";
+        Integer min = 0;
+        for(Map.Entry<String,Integer> e:map.entrySet()){
+            if(min.compareTo(e.getValue())>0){
+                ServerIP=e.getKey();
+                min=e.getValue();
+            }
+}
+        System.out.println("Server with least load: "+ServerIP);
+        
+        return ServerIP;//returns server IP with least load
+      
+      }
+      
+      
       public RMIClient() throws RemoteException, NotBoundException {
 
            initTabs();
@@ -412,6 +457,9 @@ public class RMIClient extends JFrame{
            	 
                
            	  try {
+                                getnumberOfClientsConn();
+                                String IP = getServerWithLeastLoad();
+                                connectServer(IP);//Connects with server with least amount of load
 				rmi.addEvent(eventname.getText(), description.getText());
 			} catch (RemoteException e1) {
 				// TODO Auto-generated catch block

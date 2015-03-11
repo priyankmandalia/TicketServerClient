@@ -36,6 +36,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     boolean partitionKeeperRunning = true;
     private final String myIP;
     private int amountOfEvents;
+    private int numberOfClientsConnected;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
@@ -338,6 +339,14 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public int getNumberOfEvents() throws RemoteException {
         return amountOfEvents;
+    }
+
+    @Override
+    public int getNumberOfConnections() throws RemoteException {
+        
+        numberOfClientsConnected++;
+        
+        return numberOfClientsConnected;
     }
 
 }
