@@ -34,7 +34,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     String replicaIPs[] = {"148.197.40.156", "109.152.211.4"};
     String partitionIPs[] = {"148.197.40.156", "109.152.211.4"};
     boolean partitionKeeperRunning = true;
-    private String myIP;
+    private final String myIP;
+    private int amountOfEvents;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
@@ -239,7 +240,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         // with the same imput params.
         String maxStorageServer = getMaxStorageServer();
         if (maxStorageServer.matches(myIP)) {
-
+            
+            amountOfEvents++;
             gui.addStringAndUpdate("event added - " + name + "," + description);
             this.events.add(new Event(name, description));
 
@@ -335,7 +337,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public int getNumberOfEvents() throws RemoteException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return amountOfEvents;
     }
 
 }
