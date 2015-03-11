@@ -1,4 +1,5 @@
 
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -31,7 +32,7 @@ public interface RMI extends Remote{
         
         public boolean book(String event, String customer, int amount) throws RemoteException;
         
-        public boolean addEvent(String name, String description) throws RemoteException;
+        public boolean addEvent(String name, String description) throws RemoteException, NotBoundException;
         
         public void replicate(ArrayList<Event> latest) throws RemoteException;
         
@@ -40,6 +41,8 @@ public interface RMI extends Remote{
         public String agreeLeader(String senderIP, boolean replicaOrPartition) throws RemoteException;
         
         public String[] getIPaddresses() throws RemoteException;
+        
+        public int getNumberOfEvents() throws RemoteException;
         
         
 }

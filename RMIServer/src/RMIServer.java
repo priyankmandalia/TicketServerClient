@@ -1,6 +1,9 @@
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -26,10 +29,12 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     Color purple = new Color(78, 49, 104);
     GUI gui;
     static RMI rmi;
-    ElectionManager replicaManager, partitionManager;
+    ElectionManager replicaElectionManager, partitionElectionManager;
 
     String replicaIPs[] = {"148.197.40.156", "109.152.211.4"};
     String partitionIPs[] = {"148.197.40.156", "109.152.211.4"};
+    boolean partitionKeeperRunning = true;
+    private String myIP;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
@@ -41,15 +46,17 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         super();
 
-        events.add(new Event("Glastonbury 2015", "A major UK music and contemporary performance arts festival"));
-        events.add(new Event("Greatbury 2015", "A major UK music and contemporary performance arts festival"));
-        events.add(new Event("Gusbury 2015", "A major UK music and contemporary performance arts festival"));
-        events.add(new Event("Priyankbury 2015", "A major UK music and contemporary performance arts festival"));
+        this.events.add(new Event("Glastonbury 2015", "A major UK music and contemporary performance arts festival"));
+        this.events.add(new Event("Greatbury 2015", "A major UK music and contemporary performance arts festival"));
+        this.events.add(new Event("Gusbury 2015", "A major UK music and contemporary performance arts festival"));
+        this.events.add(new Event("Priyankbury 2015", "A major UK music and contemporary performance arts festival"));
 
-        gui = new GUI("RMI Server");
+        this.gui = new GUI("RMI Server");
+        
+        this.myIP = getMyIp();
 
-        replicaManager = new ElectionManager(replicaIPs, RMI.REPLICA);
-        partitionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
+        this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA);
+        this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
 
     }
 
@@ -142,6 +149,41 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         }
         return result;
     }
+    
+    public static String getMyIp() throws MalformedURLException, IOException {
+
+        URL whatismyip = new URL("http://checkip.amazonaws.com/");
+        BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+        //you get the IP as a String
+        String ip = in.readLine();
+        return ip;
+
+    }
+    
+    private String getMaxStorageServer() throws RemoteException, NotBoundException {
+        
+        int lowest = -1;
+        int amountOfEvents = 0;
+        String resultIP = null;
+        // loop throgh all other partitions, return the 
+        // one with the least records
+        for(String ip : partitionIPs){
+        
+            connectServer(ip);
+            amountOfEvents = rmi.getNumberOfEvents();
+            if(amountOfEvents < lowest || lowest < 0){
+            
+                lowest = amountOfEvents;
+                resultIP = ip;
+            
+            }
+        
+        }
+        
+        return resultIP;
+    }
+    
+    //*********************RMI METHODS*********************
 
     @Override
     public ArrayList<String> getEvents() {
@@ -160,15 +202,24 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public boolean addEvent(String name, String description) throws RemoteException {
+    public boolean addEvent(String name, String description) throws RemoteException, NotBoundException{
+        String maxStorageServer = getMaxStorageServer();
+        if (maxStorageServer.matches(myIP)) {
 
-        gui.addStringAndUpdate("event added - " + name + "," + description);
-        this.events.add(new Event(name, description));
+            gui.addStringAndUpdate("event added - " + name + "," + description);
+            this.events.add(new Event(name, description));
 
-        try {
-            updateServers();
-        } catch (NotBoundException ex) {
-            Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+            try {
+                updateReplicas();
+            } catch (NotBoundException ex) {
+                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }else{
+        
+            connectServer(maxStorageServer);
+            rmi.addEvent(name, description);
+        
         }
 
         return false;
@@ -188,7 +239,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     }
 
-    public void updateServers() throws RemoteException, NotBoundException {
+    public void updateReplicas() throws RemoteException, NotBoundException {
 
         for (String replicaIP : replicaIPs) {
             
@@ -203,8 +254,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         Registry reg = LocateRegistry.getRegistry(ip, 1099);
         rmi = (RMI) reg.lookup("server");
-        String text = rmi.getData("output");
-        System.out.println(text);
 
     }
 
@@ -228,35 +277,35 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         // replica leader or partition leader
         if (repicaOrPartition) {
             
-            if (getDoubleIPAddress(replicaManager.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
+            if (getDoubleIPAddress(replicaElectionManager.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
                 
-                replicaManager.setCurrentLeaderIp(senderIP);
+                replicaElectionManager.setCurrentLeaderIp(senderIP);
                 try {
-                    replicaManager.connectServer(senderIP);
+                    replicaElectionManager.connectServer(senderIP);
                 } catch (NotBoundException ex) {
                     Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                replicaManager.setHeartbeat(true);
+                replicaElectionManager.setHeartbeat(true);
 
             }
             
         } else {
 
-            if (getDoubleIPAddress(partitionManager.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
+            if (getDoubleIPAddress(partitionElectionManager.getCurrentLeaderIp()) < getDoubleIPAddress(senderIP)) {
                 
-                partitionManager.setCurrentLeaderIp(senderIP);
+                partitionElectionManager.setCurrentLeaderIp(senderIP);
                 try {
-                    partitionManager.connectServer(senderIP);
+                    partitionElectionManager.connectServer(senderIP);
                 } catch (NotBoundException ex) {
                     Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                partitionManager.setHeartbeat(true);
+                partitionElectionManager.setHeartbeat(true);
 
             }
 
         }
         
-        return replicaManager.getCurrentLeaderIp();
+        return replicaElectionManager.getCurrentLeaderIp();
     }
 
     private double getDoubleIPAddress(String ip) {
@@ -271,6 +320,11 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
          gui.addStringAndUpdate("List of Server IP Addresses returned");
         
         return replicaIPs;
+    }
+
+    @Override
+    public int getNumberOfEvents() throws RemoteException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
