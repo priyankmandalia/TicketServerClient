@@ -12,7 +12,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,7 +22,7 @@ import java.util.logging.Logger;
 public class ElectionManager {
 
     private RMI rmi;
-    public String currentLeaderIp;
+    private String currentLeaderIp;
     boolean heartbeat = true;
     private final String ipaddresses[];
 
@@ -38,8 +37,6 @@ public class ElectionManager {
 
     private void go() throws RemoteException, NotBoundException, IOException, InterruptedException {
 
-//        System.out.println("conneting to - " + currentLeaderIp);
-//        connectServer(currentLeaderIp);
         Thread t = new Thread(new Runnable() {
 
             int serversAlive;
@@ -47,6 +44,7 @@ public class ElectionManager {
             @Override
             public void run() {
                 try {
+                    
                     // get own IP
                     String myIP = getMyIp();
                     // loop through all other ip's, connect and compare own ip with their leader ip
@@ -67,12 +65,12 @@ public class ElectionManager {
                             }
                         }
                     }
-                    System.out.println(serversAlive);
-                    System.out.println(currentLeaderIp);
-                    System.out.println(heartbeat);
+                    // check if this leader is or has become the leader
+                    // if so, stop the the heartbeat as this is only for 
+                    // ensuring leader is responding
                     if (serversAlive == 0) {
 
-                        // election has gone wrong
+                        // election has gone wrong, this becomes leader
                         System.out.println("Error, couldnt find leader");
                         System.out.println("This server has assumed leader");
                         currentLeaderIp = myIP;
@@ -85,27 +83,28 @@ public class ElectionManager {
                         System.out.println("This Server is leader");
 
                     }
-
+                    //loop forever, if not leader continuously check if leader is alive
+                    // if leader, dont check but stay in loop incase of bully situation
                     while (true) {
 
                         if (heartbeat) {
 
                             try {
 
-                                // call the leader's isRunning function 
+                                // check if leader is alive 
                                 if (rmi.isRunning()) {
 
                                     System.out.println("Leader " + currentLeaderIp + " is running");
 
                                 }
-                                // check leader is running every 2 seconds
+                                // every 2 seconds
                                 Thread.sleep(2000);
 
                             } catch (RemoteException ex) {
 
                                 try {
                                     // leader has crashed, connection to leader raised exception
-                                    // connect to next highest
+                                    // connect to next highest ip
                                     connectToRunnerUp();
                                     System.out.println("Leader crashed");
                                 } catch (RemoteException ex1) {
@@ -124,6 +123,7 @@ public class ElectionManager {
                 }
             }
         });
+        // start thread defined above
         t.start();
 
     }
@@ -132,7 +132,8 @@ public class ElectionManager {
 
         int index = 0;
         double highest = 0;
-
+        // loop through all ip addresses, converting to doubles for value comparison
+        // reuturn the highest found, do not include current leader as this has crashed
         for (int i = 0; i < ipaddresses.length; i++) {
 
             if (getDoubleIPAddress(ipaddresses[i]) > highest && !currentLeader.matches(ipaddresses[i])) {
@@ -151,7 +152,7 @@ public class ElectionManager {
 
         int index = 0;
         double highest = 0;
-
+        // as in getNextLeader(), find highest ip in list, without any restrictions
         for (int i = 0; i < ipaddresses.length; i++) {
 
             if (getDoubleIPAddress(ipaddresses[i]) > highest) {
@@ -168,7 +169,8 @@ public class ElectionManager {
     }
 
     private void connectToRunnerUp() throws RemoteException, NotBoundException {
-
+        
+        // get next highest leader and connect to it
         currentLeaderIp = getNextLeader(currentLeaderIp);
         connectServer(currentLeaderIp);
 
@@ -177,7 +179,7 @@ public class ElectionManager {
     public boolean connectServer(String ipaddress) throws RemoteException, NotBoundException {
 
         try {
-
+            // complete the RMI connet flow, return true on success
             Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
             rmi = (RMI) reg.lookup("server");
             System.out.println("rmi found");
