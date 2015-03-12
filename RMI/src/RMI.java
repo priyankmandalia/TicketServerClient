@@ -44,7 +44,11 @@ public interface RMI extends Remote{
         
         public int getNumberOfEvents() throws RemoteException;
         
-         public int getNumberOfConnections() throws RemoteException;
+        public int getNumberOfConnections() throws RemoteException;
+        
+        public void notifyConnected() throws RemoteException;
+        
+        public void notifyDisconnected() throws RemoteException;
         
         
 }

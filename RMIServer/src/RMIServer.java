@@ -147,6 +147,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         // java rmi connect flow
         Registry reg = LocateRegistry.getRegistry(ip, 1099);
         rmi = (RMI) reg.lookup("server");
+        
 
     }
     
@@ -344,9 +345,22 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public int getNumberOfConnections() throws RemoteException {
         
+        return numberOfClientsConnected;
+        
+    }
+
+    @Override
+    public void notifyConnected() throws RemoteException {
+        
         numberOfClientsConnected++;
         
-        return numberOfClientsConnected;
+    }
+    
+    @Override
+    public void notifyDisconnected() throws RemoteException {
+        
+        numberOfClientsConnected--;
+        
     }
 
 }
