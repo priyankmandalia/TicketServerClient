@@ -72,19 +72,18 @@ public class RMIClient extends JFrame {
                 
                 load = rmi.getNumberOfConnections();
                 
-            }catch (RemoteException ex) {
-                
-                System.out.println("Failed to connect to - " + leadServerIP);
-                
-            }
-            
-            if(load < lowestLoad || lowestLoad < 0){
+                if(load < lowestLoad || lowestLoad < 0){
             
                 lowestLoad = load;
                 lowestLoadServer = leadServerIP;
             
             }
-            
+                
+            }catch (RemoteException ex) {
+                
+                System.out.println("Failed to connect to - " + leadServerIP);
+                
+            }
         }
         
         connectServer(lowestLoadServer);
