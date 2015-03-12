@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  */
 public class RMIServer extends UnicastRemoteObject implements RMI {
 
-    ArrayList<Event> events = new ArrayList<Event>();
+    ArrayList<Event> events = new ArrayList<>();
     Color purple = new Color(78, 49, 104);
     GUI gui;
     static RMI rmi;
@@ -52,9 +52,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
             Registry reg = LocateRegistry.createRegistry(port);
             reg.rebind("server", new RMIServer());
             System.out.println("reg.rebind");
-        } catch (RemoteException ex1) {
-            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-        } catch (NotBoundException ex1) {
+        } catch (RemoteException | NotBoundException ex1) {
             Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
         }
 
@@ -110,17 +108,17 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private String getMaxStorageServer() throws RemoteException, NotBoundException {
         
         int lowest = -1;
-        int amountOfEvents = 0;
+        int eventsAmount;
         String resultIP = null;
         // loop throgh all other partitions, return the 
         // one with the least records
         for(String ip : partitionIPs){
         
             connectServer(ip);
-            amountOfEvents = rmi.getNumberOfEvents();
-            if(amountOfEvents < lowest || lowest < 0){
+            eventsAmount = rmi.getNumberOfEvents();
+            if(eventsAmount < lowest || lowest < 0){
             
-                lowest = amountOfEvents;
+                lowest = eventsAmount;
                 resultIP = ip;
             
             }
@@ -268,7 +266,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public ArrayList<String> getServers() {
 
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
         result.add("server1");
         result.add("server2");
 
