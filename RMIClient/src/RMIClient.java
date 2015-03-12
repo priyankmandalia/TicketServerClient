@@ -45,10 +45,9 @@ public class RMIClient extends JFrame {
     static String ServerIPAddress = "127.0.0.1";//loopback
     public static String listIP[] = {"109.152.211.4", "127.0.0.1"};
     public static String NewServer;
-    private static int i = -1;
     private static int loadbalancenumber;
 
-    private static Map<String, Integer> map = new HashMap<String, Integer>();
+    private static Map<String, Integer> map = new HashMap<>();
 
     public static void main(String args[]) throws RemoteException, NotBoundException {
 
@@ -94,6 +93,7 @@ public class RMIClient extends JFrame {
 
     private static String getNextServer() {
 
+        int i = -1;
         if (i < listIP.length - 1) {
 
             i++;
@@ -147,17 +147,13 @@ public class RMIClient extends JFrame {
     public RMIClient() throws RemoteException, NotBoundException {
 
         initTabs();
-        this.connectServer(ServerIPAddress);
 
         this.setSize(1000, 500);
         this.setVisible(true);
         //this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     }
-
-    /**
-     *
-     */
+    
     public JPanel clientUI() throws RemoteException {
 
         //   JPanel emptypanel;
@@ -253,6 +249,7 @@ public class RMIClient extends JFrame {
         listbox.setFixedCellWidth(400);
 
         ListSelectionListener listSelectionListener = new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent listSelectionEvent) {
 
                 JList list = (JList) listSelectionEvent.getSource();
@@ -262,13 +259,13 @@ public class RMIClient extends JFrame {
                     bookingData = rmi.getBookings(list.getSelectedValue().toString());
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    System.out.println(e1.getMessage());
                 }
 
                 DefaultListModel model = new DefaultListModel();
 
-                for (int i = 0; i < bookingData.size(); i++) {
-                    model.addElement(bookingData.get(i)); // <-- Add item to model
+                for (String bookingdata : bookingData) {
+                    model.addElement(bookingdata); // <-- Add item to model
                 }
                 bookings.setModel(model);
 
@@ -278,9 +275,9 @@ public class RMIClient extends JFrame {
         listbox.addListSelectionListener(listSelectionListener);
 
         search.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
-                String s = null;
-                s = searchfield.getText().toString();
+                String s = searchfield.getText();
 
                 try {
                     ArrayList<String> events = rmi.searchEvents(s);
@@ -290,20 +287,21 @@ public class RMIClient extends JFrame {
 
                     DefaultListModel model = new DefaultListModel();
 
-                    for (int i = 0; i < events.size(); i++) {
-                        model.addElement(events.get(i)); // <-- Add item to model
+                    for (String event : events) {
+                        model.addElement(event); // <-- Add item to model
                     }
                     listbox.setModel(model);
 
                 } catch (RemoteException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    System.out.println(e1.getMessage());
+                    
                 }
 
             }
         });
 
         showall.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 listbox.setListData(new Object[0]);
@@ -311,13 +309,13 @@ public class RMIClient extends JFrame {
                     listData = rmi.getEvents();
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    System.out.println(e1.getMessage());
                 }
 
                 DefaultListModel model = new DefaultListModel();
 
-                for (int i = 0; i < listData.size(); i++) {
-                    model.addElement(listData.get(i)); // <-- Add item to model
+                for (String listdata : listData) {
+                    model.addElement(listdata); // <-- Add item to model
                 }
                 listbox.setModel(model);
 
@@ -325,13 +323,14 @@ public class RMIClient extends JFrame {
         });
 
         book.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 try {
-                    rmi.book(listbox.getSelectedValue().toString(), customer.getText().toString(), Integer.parseInt(tickets.getText().toString()));
+                    rmi.book(listbox.getSelectedValue().toString(), customer.getText(), Integer.parseInt(tickets.getText()));
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    System.out.println(e1.getMessage());
                 }
 
             }
@@ -402,6 +401,7 @@ public class RMIClient extends JFrame {
            //ArrayList<String> listData = rmi.getEvents();
 
         addevent.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
 
                 try {
@@ -411,7 +411,7 @@ public class RMIClient extends JFrame {
                     rmi.addEvent(eventname.getText(), description.getText());
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    System.out.println(e1.getMessage());
                 } catch (NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -459,14 +459,13 @@ public class RMIClient extends JFrame {
         connect.setPreferredSize(new Dimension(130, 40));
 
         connect.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     //To Do
                     connectServer(ServerIPAddress);
                     listData = rmi.getEvents();
-                } catch (RemoteException ex) {
-                    Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (NotBoundException ex) {
+                } catch (RemoteException | NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
@@ -499,6 +498,7 @@ public class RMIClient extends JFrame {
         addresslist.setFixedCellWidth(400);
 
         ListSelectionListener listSelectionListener = new ListSelectionListener() {
+            @Override
             public void valueChanged(ListSelectionEvent listSelectionEvent) {
 
                 JList list = (JList) listSelectionEvent.getSource();
