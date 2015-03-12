@@ -42,8 +42,8 @@ public class RMIClient extends JFrame {
     static RMI rmi;
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
-    static String ServerIPAddress = "127.0.0.1";//loopback
-    public static String listIP[] = {"109.152.211.4", "127.0.0.1"};
+    private String chosenIpAddress;
+    public static String[] leadServerIPs = {"109.152.211.4", "127.0.0.1"};
     public static String NewServer;
     private static int loadbalancenumber;
 
@@ -51,50 +51,62 @@ public class RMIClient extends JFrame {
 
     public static void main(String args[]) throws RemoteException, NotBoundException {
 
-        connectServer(ServerIPAddress);
+        connectLowestLoadServer();
         rmi.notifyConnected();
-        listIP = rmi.getIPaddresses();
+        leadServerIPs = rmi.getIPaddresses();
         RMIClient obj = new RMIClient();
 
     }
 
-    private static void connectServer(String IPaddress) throws RemoteException, NotBoundException {
+    private static void connectLowestLoadServer() throws RemoteException, NotBoundException {
 
-        try {
-
-            System.out.println("Inside connectServer");
-            Registry reg = LocateRegistry.getRegistry(IPaddress, 1099);
-            rmi = (RMI) reg.lookup("server");
-            if (rmi.isRunning()) {
-                System.out.println("Connected to default server");
-            }
-
-        } catch (RemoteException ex) {
+        int load = 0;
+        int lowestLoad = -1;
+        String lowestLoadServer = null;
+        
+        for (String leadServerIP : leadServerIPs) {
+            
             try {
-
-                getRunnerUp();
-                System.out.println("Leader crashed");
-
-            } catch (RemoteException | NotBoundException ex1) {
-                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
+                
+                connectServer(leadServerIP);
+                
+                load = rmi.getNumberOfConnections();
+                
+            }catch (RemoteException ex) {
+                
+                System.out.println("Failed to connect to - " + leadServerIP);
+                
             }
-
+            
+            if(load < lowestLoad || lowestLoad < 0){
+            
+                lowestLoad = load;
+                lowestLoadServer = leadServerIP;
+            
+            }
+            
         }
+        
+        connectServer(lowestLoadServer);
 
     }
+    
+    private static void connectServer(String ip) throws RemoteException, NotBoundException {
 
-    private static void getRunnerUp() throws RemoteException, NotBoundException {
+        Registry reg = LocateRegistry.getRegistry(ip, 1099);
+        rmi = (RMI) reg.lookup("server");
+        if (rmi.isRunning()) {
 
-        NewServer = getNextServer();
-        connectServer(NewServer);
-        System.out.println("NewServer IP: " + NewServer);
+            System.out.println("Connected to - " + ip);
+
+        }
 
     }
 
     private static String getNextServer() {
 
         int i = -1;
-        if (i < listIP.length - 1) {
+        if (i < leadServerIPs.length - 1) {
 
             i++;
 
@@ -103,9 +115,9 @@ public class RMIClient extends JFrame {
             i = 0;
 
         }
-        System.out.println("List length: " + listIP.length);
+        System.out.println("List length: " + leadServerIPs.length);
         System.out.println("Index: " + i);
-        String s = listIP[i];
+        String s = leadServerIPs[i];
 
         return s;
     }
@@ -113,8 +125,8 @@ public class RMIClient extends JFrame {
     //Adds amount of loads of all the server in hashmap
     private static void getnumberOfClientsConn() throws RemoteException, NotBoundException {
         int count;
-        for (int i = 0; i < listIP.length - 1; i++) {
-            String s = listIP[i];
+        for (int i = 0; i < leadServerIPs.length - 1; i++) {
+            String s = leadServerIPs[i];
             connectServer(s);
             count = rmi.getNumberOfConnections();
             System.out.println("Server " + i + ": " + s);
@@ -463,7 +475,7 @@ public class RMIClient extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 try {
                     //To Do
-                    connectServer(ServerIPAddress);
+                    connectServer(chosenIpAddress);
                     listData = rmi.getEvents();
                 } catch (RemoteException | NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -490,7 +502,7 @@ public class RMIClient extends JFrame {
 //                "148.197.27.155",
 //                "148.197.27.156"
 //            };
-        addresslist = new JList(listIP);
+        addresslist = new JList(leadServerIPs);
         //     listbox = new JList(listData);
         addresslist.setBackground(Color.white);
         addresslist.setFont(font);
@@ -502,7 +514,7 @@ public class RMIClient extends JFrame {
             public void valueChanged(ListSelectionEvent listSelectionEvent) {
 
                 JList list = (JList) listSelectionEvent.getSource();
-                ServerIPAddress = list.getSelectedValue().toString();
+                chosenIpAddress = list.getSelectedValue().toString();
 
             }
 
