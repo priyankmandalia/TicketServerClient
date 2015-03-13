@@ -37,6 +37,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private final String myIP;
     private int amountOfEvents;
     private int numberOfClientsConnected;
+    private int indexOfReplica = 0;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
 
@@ -358,6 +359,19 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public void notifyDisconnected() throws RemoteException {
         
         numberOfClientsConnected--;
+        
+    }
+
+    @Override
+    public String getReadServer() throws RemoteException {
+        
+        if(indexOfReplica == replicaIPs.length){
+        
+            indexOfReplica = 0;
+        
+        }
+        
+        return replicaIPs[indexOfReplica];
         
     }
 

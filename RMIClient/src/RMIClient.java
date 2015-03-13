@@ -36,7 +36,7 @@ import javax.swing.event.ListSelectionListener;
  * @author up705759
  */
 public class RMIClient extends JFrame {
-
+    
     JList listbox;
     JList addresslist;
     static RMI rmi;
@@ -45,7 +45,8 @@ public class RMIClient extends JFrame {
     private String chosenIpAddress;
     public static String[] leadServerIPs = {"109.152.211.4", "127.0.0.1"};
     public static String NewServer;
-    private static int loadbalancenumber;
+    private static String writeServer;
+    private static String readServer;
 
     private static Map<String, Integer> map = new HashMap<>();
 
@@ -87,6 +88,8 @@ public class RMIClient extends JFrame {
         }
         
         connectServer(lowestLoadServer);
+        writeServer = lowestLoadServer;
+        readServer = rmi.getReadServer();
 
     }
     
@@ -165,7 +168,7 @@ public class RMIClient extends JFrame {
 
     }
     
-    public JPanel clientUI() throws RemoteException {
+    public JPanel clientUI() throws RemoteException, NotBoundException {
 
         //   JPanel emptypanel;
         Color purple = new Color(78, 49, 104);
@@ -244,6 +247,7 @@ public class RMIClient extends JFrame {
         final JPanel textpanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         textpanel.setBackground(purple);
         textpanel.setSize(200, 380);
+        connectServer(readServer);
         listData = rmi.getEvents();
 
 //        String listData[] = {
@@ -267,10 +271,13 @@ public class RMIClient extends JFrame {
 
                 bookings.setListData(new Object[0]);
                 try {
+                    connectServer(readServer);
                     bookingData = rmi.getBookings(list.getSelectedValue().toString());
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
                     System.out.println(e1.getMessage());
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 DefaultListModel model = new DefaultListModel();
@@ -291,6 +298,7 @@ public class RMIClient extends JFrame {
                 String s = searchfield.getText();
 
                 try {
+                    connectServer(readServer);
                     ArrayList<String> events = rmi.searchEvents(s);
                     System.out.println(events);
 
@@ -306,6 +314,8 @@ public class RMIClient extends JFrame {
                 } catch (RemoteException e1) {
                     System.out.println(e1.getMessage());
                     
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
             }
@@ -317,10 +327,13 @@ public class RMIClient extends JFrame {
 
                 listbox.setListData(new Object[0]);
                 try {
+                    connectServer(readServer);
                     listData = rmi.getEvents();
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
                     System.out.println(e1.getMessage());
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 DefaultListModel model = new DefaultListModel();
@@ -338,10 +351,13 @@ public class RMIClient extends JFrame {
             public void actionPerformed(ActionEvent e) {
 
                 try {
+                    connectServer(writeServer);
                     rmi.book(listbox.getSelectedValue().toString(), customer.getText(), Integer.parseInt(tickets.getText()));
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
                     System.out.println(e1.getMessage());
+                } catch (NotBoundException ex) {
+                    Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
             }
@@ -419,6 +435,7 @@ public class RMIClient extends JFrame {
                     getnumberOfClientsConn();
                     String IP = getServerWithLeastLoad();
                     connectServer(IP);                   //Connects with server with least amount of load
+                    connectServer(writeServer);
                     rmi.addEvent(eventname.getText(), description.getText());
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
@@ -529,7 +546,7 @@ public class RMIClient extends JFrame {
         return topLevelPanel;
     }
 
-    private void initTabs() throws RemoteException {
+    private void initTabs() throws RemoteException, NotBoundException {
         Color green = new Color(85, 222, 127);
         Color orange = new Color(222, 146, 85);
         JTabbedPane tabbedPane = new JTabbedPane();

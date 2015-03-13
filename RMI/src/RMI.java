@@ -50,6 +50,8 @@ public interface RMI extends Remote{
         
         public void notifyDisconnected() throws RemoteException;
         
+        public String getReadServer() throws RemoteException;
+        
         
 }
 
