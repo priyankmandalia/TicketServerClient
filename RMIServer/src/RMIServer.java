@@ -31,8 +31,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     static RMI rmi;
     ElectionManager replicaElectionManager, partitionElectionManager;
 
-    String replicaIPs[] = {"148.197.40.156", "109.152.211.4"};
-    String partitionIPs[] = {"148.197.40.156", "109.152.211.4"};
+    String replicaIPs[] = {"127.0.0.1", "109.157.191.99"};
+    String partitionIPs[] = {"127.0.0.1", "109.157.191.99"};
     boolean partitionKeeperRunning = true;
     private final String myIP;
     private int amountOfEvents;

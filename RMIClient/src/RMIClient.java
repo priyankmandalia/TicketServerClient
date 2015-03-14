@@ -43,7 +43,7 @@ public class RMIClient extends JFrame {
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
     private String chosenIpAddress;
-    public static String[] leadServerIPs = {"109.152.211.4", "127.0.0.1"};
+    public static String[] leadServerIPs = {"109.157.191.99", "127.0.0.1"};
     public static String NewServer;
     private static String writeServer;
     private static String readServer;
