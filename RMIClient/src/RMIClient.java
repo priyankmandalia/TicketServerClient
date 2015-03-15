@@ -47,6 +47,7 @@ public class RMIClient extends JFrame {
     public static String NewServer;
     private static String writeServer;
     private static String readServer;
+     private static int i = -1;
 
     private static Map<String, Integer> map = new HashMap<>();
 
@@ -95,34 +96,65 @@ public class RMIClient extends JFrame {
     
     private static void connectServer(String ip) throws RemoteException, NotBoundException {
 
-        Registry reg = LocateRegistry.getRegistry(ip, 1099);
-        rmi = (RMI) reg.lookup("server");
-        if (rmi.isRunning()) {
+//        Registry reg = LocateRegistry.getRegistry(ip, 1099);
+//        rmi = (RMI) reg.lookup("server");
+//        if (rmi.isRunning()) {
+//
+//            System.out.println("Connected to - " + ip);
+//
+//        }
+        
+        try {
+                            System.out.println("Inside connectServer");
+                            Registry reg = LocateRegistry.getRegistry(ip, 1099);
+                            rmi = (RMI) reg.lookup("server");
 
-            System.out.println("Connected to - " + ip);
+                            if (rmi.isRunning()) {
+                                System.out.println("Connected to - " + ip);
+                               
+                            }
 
-        }
+                        } catch (RemoteException ex) {
+                            try {
+                                getRunnerUp();
+                                System.out.println("Leader crashed");
+                            } catch (RemoteException ex1) {
+                                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
+                            } catch (NotBoundException ex1) {
+                                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
+
+                        } 
 
     }
-
-    private static String getNextServer() {
-
-        int i = -1;
-        if (i < leadServerIPs.length - 1) {
-
-            i++;
-
-        } else {
-
-            i = 0;
-
-        }
-        System.out.println("List length: " + leadServerIPs.length);
-        System.out.println("Index: " + i);
-        String s = leadServerIPs[i];
-
-        return s;
+    
+    private static void getRunnerUp() throws RemoteException, NotBoundException {
+                
+                NewServer = getNextServer();
+                connectServer(NewServer);
+                System.out.println("NewServer IP: "+NewServer);
+                
     }
+
+   private static String getNextServer(){
+         
+         
+         if(i < leadServerIPs.length-1){
+         i++;
+         }
+         else{
+         i=0;
+         }
+         System.out.println("List length: "+leadServerIPs.length);
+         System.out.println("Index: "+i);
+         String s = leadServerIPs[i];
+         
+         
+         
+     
+     
+     return s;
+     }
 
     //Adds amount of loads of all the server in hashmap
     private static void getnumberOfClientsConn() throws RemoteException, NotBoundException {
@@ -432,9 +464,9 @@ public class RMIClient extends JFrame {
             public void actionPerformed(ActionEvent e) {
 
                 try {
-                    getnumberOfClientsConn();
-                    String IP = getServerWithLeastLoad();
-                    connectServer(IP);                   //Connects with server with least amount of load
+                  //  getnumberOfClientsConn();
+                  //  String IP = getServerWithLeastLoad();
+                  //  connectServer(IP);                   //Connects with server with least amount of load
                     connectServer(writeServer);
                     rmi.addEvent(eventname.getText(), description.getText());
                 } catch (RemoteException e1) {
