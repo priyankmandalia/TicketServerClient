@@ -293,6 +293,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public String agreeLeader(String senderIP, boolean repicaOrPartition) throws RemoteException {
         
+        String IP = null;
         // check weather incoming request is asking to agree on 
         // replica leader or partition leader
         if (repicaOrPartition) {
@@ -306,6 +307,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
                     Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 replicaElectionManager.setHeartbeat(true);
+                IP = replicaElectionManager.getCurrentLeaderIp(); //Replica leader
 
             }
             
@@ -320,12 +322,14 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
                     Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 partitionElectionManager.setHeartbeat(true);
-
+                IP = partitionElectionManager.getCurrentLeaderIp(); //Partition leader
+                
             }
 
         }
         
-        return replicaElectionManager.getCurrentLeaderIp();
+        
+        return IP;
     }
 
     @Override
