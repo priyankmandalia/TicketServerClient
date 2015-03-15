@@ -583,13 +583,13 @@ public class RMIClient extends JFrame {
         Color orange = new Color(222, 146, 85);
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        tabbedPane.addTab("Configure", null, configureUI(), "Book Events");
+        tabbedPane.addTab("Configure", null, configureUI(), "Settings");
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
 
-        tabbedPane.addTab("Client", null, clientUI(), "Add Events");
+        tabbedPane.addTab("Client", null, clientUI(), "Book Events");
         tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
 
-        tabbedPane.addTab("Bussiness", null, clientUIBussiness(), "Settings");
+        tabbedPane.addTab("Business", null, clientUIBussiness(), "Add Events");
         tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
 
         tabbedPane.setBackground(Color.white);
