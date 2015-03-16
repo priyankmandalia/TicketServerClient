@@ -1,5 +1,3 @@
-package rmiserver;
-
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,13 +36,14 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     static RMI rmi;
     ElectionManager replicaElectionManager, partitionElectionManager;
 
-    String replicaIPs[] = {"127.0.0.1", "109.157.191.99"};
-    String partitionIPs[] = {"127.0.0.1", "109.157.191.99"};
+    String replicaIPs[];
+    String partitionIPs[];
     boolean partitionKeeperRunning = true;
     private final String myIP;
     private int amountOfEvents;
     private int numberOfClientsConnected;
     private int indexOfReplica = 0;
+    private boolean connectedToLeader = false;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -78,14 +77,15 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         this.gui = new GUI("RMI Server");
         
         this.myIP = getMyIp();
+        paramReader params = new paramReader("partitions.xml", "replicas.xml");
+        replicaIPs = params.getReplicas();
+        partitionIPs = params.getPartitions();
 
         this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA);
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
         
-        paramReader params = new paramReader("partitions.xml", "replicas.xml");
         
-        System.out.println(params.getPartitions());
-        System.out.println(params.getReplicas());
+        
 
     }
     
@@ -388,6 +388,25 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         }
         
         return replicaIPs[indexOfReplica];
+        
+    }
+
+    @Override
+    public boolean assignReplica(String ip) throws RemoteException {
+        
+        if(!connectedToLeader){
+        
+            try {
+                connectServer(ip);
+            } catch (NotBoundException ex) {
+                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            connectedToLeader = true;
+            return true;
+        
+        }
+        
+        return false;
         
     }
 

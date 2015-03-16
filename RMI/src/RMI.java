@@ -1,4 +1,4 @@
-package rmi;
+
 
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -52,6 +52,8 @@ public interface RMI extends Remote{
         public void notifyDisconnected() throws RemoteException;
         
         public String getReadServer() throws RemoteException;
+        
+        public boolean assignReplica(String ip) throws RemoteException;
         
         
 }
