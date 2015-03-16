@@ -15,8 +15,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
-import rmi.RMI;
-import rmi.Event;
 
 
 /*
@@ -290,7 +288,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public void replicate(ArrayList<rmi.Event> latest) throws RemoteException {
+    public void replicate(ArrayList<Event> latest) throws RemoteException {
 
         this.events = latest;
         gui.addStringAndUpdate("Server Updated");
