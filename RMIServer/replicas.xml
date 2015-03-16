@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<replicas>
+	
+	<replica id = "0">
+            
+        <ip>127.169.347</ip>
+        
+        </replica>
+	<replica id = "1">
+            
+        <ip>127.169.346</ip>
+        
+        </replica>
+
+</replicas>

@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -14,6 +15,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.parsers.ParserConfigurationException;
+import org.xml.sax.SAXException;
 import rmi.RMI;
 import rmi.Event;
 
@@ -43,13 +46,13 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private int numberOfClientsConnected;
     private int indexOfReplica = 0;
 
-    public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
+    public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
         startServer(1099);
 
     }
     
-    public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
+    public static void startServer(int port) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
         // java rmi server binding flow, using this class
         // as its a sub class of unicast remote object
@@ -63,7 +66,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     }
 
-    public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException {
+    public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
         super();
 
@@ -78,6 +81,11 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA);
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
+        
+        paramReader params = new paramReader("partitions.xml", "replicas.xml");
+        
+        System.out.println(params.getPartitions());
+        System.out.println(params.getReplicas());
 
     }
     
