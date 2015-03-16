@@ -157,6 +157,7 @@ public class ElectionManager {
         // as in getNextLeader(), find highest ip in list, without any restrictions
         for (int i = 0; i < ipaddresses.length; i++) {
 
+            System.out.println(ipaddresses[i]);
             if (getDoubleIPAddress(ipaddresses[i]) > highest) {
 
                 highest = getDoubleIPAddress(ipaddresses[i]);

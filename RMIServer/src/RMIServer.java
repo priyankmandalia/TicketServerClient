@@ -42,6 +42,9 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private int numberOfClientsConnected;
     private int indexOfReplica = 0;
     private boolean connectedToLeader = false;
+    private int noofreplicaleaders = 0;
+    private int noofreplicas = 0;
+    private String[] actualReplicas;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -78,9 +81,17 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         paramReader params = new paramReader("partitions.xml", "replicas.xml");
         replicaIPs = params.getReplicas();
         partitionIPs = params.getPartitions();
-
-        this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA);
+        
+        noofreplicaleaders = replicaIPs.length;
+        noofreplicas = partitionIPs.length;
+        
+        getReplicas(noofreplicas, noofreplicas);
+        
+        System.out.println(actualReplicas[0]);
+        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA);
+        System.out.println("done replica");
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
+        System.out.println("done partition");
         
         
         
@@ -137,6 +148,29 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         }
         
         return resultIP;
+    }
+    // get replicas 
+    private void getReplicas(int leaders, int replicas){
+     
+    int needed = replicas/leaders;
+    actualReplicas = new String[needed];
+    int j = 0;
+    for (String replicaIP : replicaIPs) {
+        try {
+            if (actualReplicas.length != needed) {
+                System.out.println(replicaIP);
+                connectServer(replicaIP);
+                if (rmi.assignReplica(myIP)) {
+                    actualReplicas[j] = replicaIP;
+                    j++;
+                }
+            }
+        }catch (RemoteException | NotBoundException ex) {
+            Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+        
+        
     }
     
     public void updateReplicas() throws RemoteException, NotBoundException {
