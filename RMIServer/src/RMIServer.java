@@ -44,7 +44,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private boolean connectedToLeader = false;
     private int noofreplicaleaders = 0;
     private int noofreplicas = 0;
-    private String[] actualReplicas;
+    private String[] actualReplicas ;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -149,7 +149,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         
         return resultIP;
     }
-    // get replicas 
+    // get all the replicas and distrubute based on the number of Partition leaders 
     private void getReplicas(int leaders, int replicas){
      
     int needed = replicas/leaders;
