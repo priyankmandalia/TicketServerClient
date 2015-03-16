@@ -85,12 +85,12 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         noofreplicaleaders = replicaIPs.length;
         noofreplicas = partitionIPs.length;
         
-        getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
+//        getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         
-        System.out.println(actualReplicas[0]);
+//        System.out.println(actualReplicas[0]);
         
-        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA); //Change replicaIPs to actualReplicas
-        System.out.println("done replica");
+//        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA); //Change replicaIPs to actualReplicas
+//        System.out.println("done replica");
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
         System.out.println("done partition");
         
@@ -175,7 +175,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
     
     public void updateReplicas() throws RemoteException, NotBoundException {
-        
+         getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         // loop through replicas and replicate own events
         for (String replicaIP : actualReplicas) {
             
@@ -413,7 +413,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public String getReadServer() throws RemoteException {
-        
+         getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         if(indexOfReplica == actualReplicas.length){
         
             indexOfReplica = 0;
