@@ -44,7 +44,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private boolean connectedToLeader = false;
     private int noofreplicaleaders = 0;
     private int noofreplicas = 0;
-    private String[] actualReplicas ;
+    private String[] actualReplicas;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -85,10 +85,11 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         noofreplicaleaders = replicaIPs.length;
         noofreplicas = partitionIPs.length;
         
-        getReplicas(noofreplicas, noofreplicas);
+        getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         
         System.out.println(actualReplicas[0]);
-        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA);
+        
+        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA); //Change replicaIPs to actualReplicas
         System.out.println("done replica");
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
         System.out.println("done partition");
@@ -176,7 +177,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public void updateReplicas() throws RemoteException, NotBoundException {
         
         // loop through replicas and replicate own events
-        for (String replicaIP : replicaIPs) {
+        for (String replicaIP : actualReplicas) {
             
             connectServer(replicaIP);
             rmi.replicate(events);
@@ -381,7 +382,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         
          gui.addStringAndUpdate("List of Server IP Addresses returned");
         
-        return replicaIPs;
+        return partitionIPs;
     }
 
     @Override
@@ -413,13 +414,13 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public String getReadServer() throws RemoteException {
         
-        if(indexOfReplica == replicaIPs.length){
+        if(indexOfReplica == actualReplicas.length){
         
             indexOfReplica = 0;
         
         }
         
-        return replicaIPs[indexOfReplica];
+        return actualReplicas[indexOfReplica];
         
     }
 
