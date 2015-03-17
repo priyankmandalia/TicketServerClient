@@ -1,3 +1,5 @@
+package rmiserver;
+
 
 
 import java.io.BufferedReader;

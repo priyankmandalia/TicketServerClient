@@ -1,4 +1,4 @@
-
+package rmi;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -1,3 +1,5 @@
+package rmiserver;
+
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
@@ -17,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
+import rmi.RMI;
 
 /**
  *
@@ -27,12 +30,12 @@ public class ElectionManager {
     private RMI rmi;
     private String currentLeaderIp;
     boolean heartbeat = true;
-    private String ipAddresses[];
+    private final String ipAddresses[];
     public String activeIpAddresses[];
     private final paramReader params;
-    private int noOfReplicas, noOfPartitions;
-    private String myIP;
-    private GUI gui;
+    private final int noOfReplicas, noOfPartitions;
+    private final String myIP;
+    private final GUI gui;
 
     public ElectionManager(String[] ipaddresses, GUI gui) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 

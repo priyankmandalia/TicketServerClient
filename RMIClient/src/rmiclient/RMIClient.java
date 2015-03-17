@@ -1,4 +1,4 @@
-
+package rmiclient;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -27,6 +27,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import rmi.RMI;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
