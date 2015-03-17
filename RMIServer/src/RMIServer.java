@@ -78,21 +78,19 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         this.gui = new GUI("RMI Server");
         
         this.myIP = getMyIp();
-        paramReader params = new paramReader("partitions.xml", "replicas.xml");
-        replicaIPs = params.getReplicas();
-        partitionIPs = params.getPartitions();
+        
         
         noofreplicaleaders = replicaIPs.length;
         noofreplicas = partitionIPs.length;
         
-//        getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
+         //assign replicas to each Partition leader
         
 //        System.out.println(actualReplicas[0]);
         
 //        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA); //Change replicaIPs to actualReplicas
 //        System.out.println("done replica");
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
-        System.out.println("done partition");
+        gui.addStringAndUpdate("Partition Manager Running.");
         
         
         
@@ -150,32 +148,9 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         
         return resultIP;
     }
-    // get all the replicas and distrubute based on the number of Partition leaders 
-    private void getReplicas(int leaders, int replicas){
-     
-    int needed = replicas/leaders;
-    actualReplicas = new String[needed];
-    int j = 0;
-    for (String replicaIP : replicaIPs) {
-        try {
-            if (actualReplicas.length != needed) {
-                System.out.println(replicaIP);
-                connectServer(replicaIP);
-                if (rmi.assignReplica(myIP)) {
-                    actualReplicas[j] = replicaIP;
-                    j++;
-                }
-            }
-        }catch (RemoteException | NotBoundException ex) {
-            Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-        
-        
-    }
     
     public void updateReplicas() throws RemoteException, NotBoundException {
-         getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
+         //getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         // loop through replicas and replicate own events
         for (String replicaIP : actualReplicas) {
             
@@ -413,7 +388,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public String getReadServer() throws RemoteException {
-         getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
+         //getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         if(indexOfReplica == actualReplicas.length){
         
             indexOfReplica = 0;
@@ -425,7 +400,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public boolean assignReplica(String ip) throws RemoteException {
+    public boolean claimAsReplica(String ip) throws RemoteException {
         
         if(!connectedToLeader){
         

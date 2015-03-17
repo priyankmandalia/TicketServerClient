@@ -53,7 +53,7 @@ public interface RMI extends Remote{
         
         public String getReadServer() throws RemoteException;
         
-        public boolean assignReplica(String ip) throws RemoteException;
+        public boolean claimAsReplica(String ip) throws RemoteException;
         
         
 }
