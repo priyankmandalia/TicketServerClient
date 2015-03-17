@@ -284,7 +284,7 @@ public class RMIClient extends JFrame {
         textpanel.setBackground(purple);
         textpanel.setSize(200, 380);
         connectServer(readServer);
-        listData = rmi.getEvents();
+        listData = rmi.getEventTitles();
 
 //        String listData[] = {
 //                "Football Match",
@@ -365,7 +365,7 @@ public class RMIClient extends JFrame {
                 listbox.setListData(new Object[0]);
                 try {
                     connectServer(readServer);
-                    listData = rmi.getEvents();
+                    listData = rmi.getEventTitles();
                 } catch (RemoteException e1) {
                     // TODO Auto-generated catch block
                     System.out.println(e1.getMessage());
@@ -529,7 +529,7 @@ public class RMIClient extends JFrame {
                 try {
                     //To Do
                     connectServer(chosenIpAddress);
-                    listData = rmi.getEvents();
+                    listData = rmi.getEventTitles();
                 } catch (RemoteException | NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
