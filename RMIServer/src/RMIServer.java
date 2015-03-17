@@ -81,9 +81,9 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         replicaIPs = params.getReplicas();
         partitionIPs = params.getPartitions();
         
-        this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA); //Change replicaIPs to actualReplicas
+        this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA, gui); //Change replicaIPs to actualReplicas
         gui.addStringAndUpdate("Replica Manager Running.");
-        this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
+        this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION, gui);
         gui.addStringAndUpdate("Partition Manager Running.");
         
 

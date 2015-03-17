@@ -33,8 +33,9 @@ public class ElectionManager {
     private int noOfReplicas, noOfPartitions;
     private String allReplicas[];
     private String myIP;
+    private GUI gui;
 
-    public ElectionManager(String[] ipaddresses, boolean replicaOrPartition) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
+    public ElectionManager(String[] ipaddresses, boolean replicaOrPartition, GUI gui) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
         if(replicaOrPartition == RMI.REPLICA){
         
@@ -55,6 +56,8 @@ public class ElectionManager {
         this.params = new paramReader("partitions.xml", "replicas.xml");
         noOfReplicas = params.getReplicas().length;
         noOfPartitions = params.getPartitions().length;
+        
+        this.gui = gui;
 
         go();
     }
@@ -103,8 +106,8 @@ public class ElectionManager {
                     if (serversAlive == 0) {
 
                         // election has gone wrong, this becomes leader
-                        System.out.println("Error, couldnt find leader");
-                        System.out.println("This server has assumed leader");
+                        gui.addStringAndUpdate("Error, couldnt find leader");
+                        gui.addStringAndUpdate("This server has assumed leader");
                         currentLeaderIp = myIP;
                         heartbeat = false;
 
@@ -112,7 +115,7 @@ public class ElectionManager {
 
                         // this is the leader
                         heartbeat = false;
-                        System.out.println("This Server is leader");
+                        gui.addStringAndUpdate("This Server is leader");
 
                     }
                     //loop forever, if not leader continuously check if leader is alive
@@ -126,7 +129,7 @@ public class ElectionManager {
                                 // check if leader is alive 
                                 if (rmi.isRunning()) {
 
-                                    System.out.println("Leader " + currentLeaderIp + " is running");
+                                    gui.addStringAndUpdate("Leader " + currentLeaderIp + " is running");
 
                                 }
                                 // every 2 seconds
@@ -138,7 +141,7 @@ public class ElectionManager {
                                     // leader has crashed, connection to leader raised exception
                                     // connect to next highest ip
                                     connectToRunnerUp();
-                                    System.out.println("Leader crashed");
+                                    gui.addStringAndUpdate("Leader crashed");
                                 } catch (RemoteException ex1) {
                                     Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
                                 } catch (NotBoundException ex1) {
@@ -253,12 +256,12 @@ public class ElectionManager {
             // complete the RMI connet flow, return true on success
             Registry reg = LocateRegistry.getRegistry(ipaddress, 1099);
             rmi = (RMI) reg.lookup("server");
-            System.out.println("rmi found");
+            gui.addStringAndUpdate("rmi found");
             return true;
 
         } catch (RemoteException | NotBoundException e) {
 
-            System.out.println(e.getMessage());
+            gui.addStringAndUpdate(e.getMessage());
             return false;
 
         }
