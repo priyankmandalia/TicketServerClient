@@ -39,7 +39,7 @@ public interface RMI extends Remote{
         
         public boolean isRunning() throws RemoteException;
         
-        public String agreeLeader(String senderIP, boolean replicaOrPartition) throws RemoteException;
+        public String agreeLeader(String senderIP) throws RemoteException;
         
         public String[] getIPaddresses() throws RemoteException;
         

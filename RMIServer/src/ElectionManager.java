@@ -28,35 +28,24 @@ public class ElectionManager {
     private String currentLeaderIp;
     boolean heartbeat = true;
     private String ipAddresses[];
-    private final boolean replicaOrPartition;
+    public String activeIpAddresses[];
     private final paramReader params;
     private int noOfReplicas, noOfPartitions;
-    private String allReplicas[];
     private String myIP;
     private GUI gui;
 
-    public ElectionManager(String[] ipaddresses, boolean replicaOrPartition, GUI gui) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
+    public ElectionManager(String[] ipaddresses, GUI gui) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
-        if(replicaOrPartition == RMI.REPLICA){
-        
-            this.allReplicas = ipaddresses;
-            this.currentLeaderIp = getFirstLeader(allReplicas);
-        
-        }else{
-            
-            this.ipAddresses = ipaddresses;
-            this.currentLeaderIp = getFirstLeader(ipAddresses);
-            
-        }
-        this.replicaOrPartition = replicaOrPartition;
+        this.ipAddresses = ipaddresses;
+        this.currentLeaderIp = getFirstLeader(ipaddresses);
         // get the highest ip address and set as initial leader
-        
+
         this.myIP = getMyIp();
-        
+
         this.params = new paramReader("partitions.xml", "replicas.xml");
         noOfReplicas = params.getReplicas().length;
         noOfPartitions = params.getPartitions().length;
-        
+
         this.gui = gui;
 
         go();
@@ -70,16 +59,9 @@ public class ElectionManager {
 
             @Override
             public void run() {
-                
-                if(replicaOrPartition == RMI.REPLICA){
-                
-                    getReplicas(noOfPartitions, noOfReplicas);
-                    
-                }
-                
-                
+
                 try {
-                    
+
                     // get own IP
                     String myIP = getMyIp();
                     // loop through all other ip's, connect and compare own ip with their leader ip
@@ -91,7 +73,7 @@ public class ElectionManager {
                             if (connectServer(ip)) {
 
                                 serversAlive++;
-                                String comparedLeader = rmi.agreeLeader(myIP, replicaOrPartition);
+                                String comparedLeader = rmi.agreeLeader(myIP);
                                 if (!currentLeaderIp.matches(comparedLeader) && !myIP.matches(comparedLeader)) {
 
                                     currentLeaderIp = comparedLeader;
@@ -110,12 +92,18 @@ public class ElectionManager {
                         gui.addStringAndUpdate("This server has assumed leader");
                         currentLeaderIp = myIP;
                         heartbeat = false;
+                        getReplicas(noOfPartitions, noOfReplicas);
+
+                        
 
                     } else if (currentLeaderIp.matches(myIP)) {
 
                         // this is the leader
                         heartbeat = false;
                         gui.addStringAndUpdate("This Server is leader");
+                        getReplicas(noOfPartitions, noOfReplicas);
+
+                        
 
                     }
                     //loop forever, if not leader continuously check if leader is alive
@@ -162,43 +150,37 @@ public class ElectionManager {
         t.start();
 
     }
-    
+
     // get all the replicas and distrubute based on the number of Partition leaders 
-    private void getReplicas(int leaders, int replicas){
-     
-    int needed = replicas/leaders;
-    ipAddresses = new String[needed];
-    int j = 0;
-    for (String replicaIP : allReplicas) {
-        try {
-            if (ipAddresses.length != needed) {
-                System.out.println(replicaIP);
-                connectServer(replicaIP);
-                if (rmi.claimAsReplica(myIP)) {
-                    ipAddresses[j] = replicaIP;
-                    j++;
+    private void getReplicas(int leaders, int replicas) {
+
+        int needed = replicas / leaders;
+        gui.addStringAndUpdate("Attempting to claim " + needed + " of " + replicas + " Replicas");
+        activeIpAddresses = new String[needed];
+        int j = 0;
+        while (ipAddresses.length != needed) {
+            for (String replicaIP : ipAddresses) {
+                try {
+                    if (activeIpAddresses.length != needed) {
+                        System.out.println(replicaIP);
+                        connectServer(replicaIP);
+                        if (rmi.claimAsReplica(myIP)) {
+                            activeIpAddresses[j] = replicaIP;
+                            j++;
+                        }
+                    }
+                } catch (RemoteException | NotBoundException ex) {
+                    Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-        }catch (RemoteException | NotBoundException ex) {
-            Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
         }
+
     }
-    
-    }
-    
+
     public String[] getActiveReplicas() {
-        
-        // if this election manager is dealing with replicas
-        if(replicaOrPartition == RMI.REPLICA){
-        
-            return ipAddresses;
-        
-        }else{
-        
-            return null;
-        
-        }
-        
+
+        return activeIpAddresses;
+
     }
 
     private String getNextLeader(String currentLeader) {
@@ -207,17 +189,17 @@ public class ElectionManager {
         double highest = 0;
         // loop through all ip addresses, converting to doubles for value comparison
         // reuturn the highest found, do not include current leader as this has crashed
-        for (int i = 0; i < ipAddresses.length; i++) {
+        for (int i = 0; i < activeIpAddresses.length; i++) {
 
-            if (getDoubleIPAddress(ipAddresses[i]) > highest && !currentLeader.matches(ipAddresses[i])) {
+            if (getDoubleIPAddress(activeIpAddresses[i]) > highest && !currentLeader.matches(activeIpAddresses[i])) {
 
-                highest = getDoubleIPAddress(ipAddresses[i]);
+                highest = getDoubleIPAddress(activeIpAddresses[i]);
                 index = i;
 
             }
 
         }
-        return ipAddresses[index];
+        return activeIpAddresses[index];
 
     }
 
@@ -243,7 +225,7 @@ public class ElectionManager {
     }
 
     private void connectToRunnerUp() throws RemoteException, NotBoundException {
-        
+
         // get next highest leader and connect to it
         currentLeaderIp = getNextLeader(currentLeaderIp);
         connectServer(currentLeaderIp);
