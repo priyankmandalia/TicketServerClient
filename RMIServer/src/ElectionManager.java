@@ -39,15 +39,17 @@ public class ElectionManager {
         if(replicaOrPartition == RMI.REPLICA){
         
             this.allReplicas = ipaddresses;
+            this.currentLeaderIp = getFirstLeader(allReplicas);
         
         }else{
             
             this.ipAddresses = ipaddresses;
+            this.currentLeaderIp = getFirstLeader(ipAddresses);
             
         }
         this.replicaOrPartition = replicaOrPartition;
         // get the highest ip address and set as initial leader
-        this.currentLeaderIp = getFirstLeader();
+        
         this.myIP = getMyIp();
         
         this.params = new paramReader("partitions.xml", "replicas.xml");
@@ -178,7 +180,21 @@ public class ElectionManager {
             Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    }
+    
+    public String[] getActiveReplicas() {
         
+        // if this election manager is dealing with replicas
+        if(replicaOrPartition == RMI.REPLICA){
+        
+            return ipAddresses;
+        
+        }else{
+        
+            return null;
+        
+        }
         
     }
 
@@ -202,24 +218,24 @@ public class ElectionManager {
 
     }
 
-    private String getFirstLeader() {
+    private String getFirstLeader(String ips[]) {
 
         int index = 0;
         double highest = 0;
         // as in getNextLeader(), find highest ip in list, without any restrictions
-        for (int i = 0; i < ipAddresses.length; i++) {
+        for (int i = 0; i < ips.length; i++) {
 
-            System.out.println(ipAddresses[i]);
-            if (getDoubleIPAddress(ipAddresses[i]) > highest) {
+            System.out.println(ips[i]);
+            if (getDoubleIPAddress(ips[i]) > highest) {
 
-                highest = getDoubleIPAddress(ipAddresses[i]);
+                highest = getDoubleIPAddress(ips[i]);
                 index = i;
 
             }
 
         }
 
-        return ipAddresses[index];
+        return ips[index];
 
     }
 

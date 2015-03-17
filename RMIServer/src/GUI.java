@@ -47,7 +47,7 @@ public class GUI extends JFrame
     
         logText.setForeground(Color.white);
         logText.setFont(font);
-    	logText.append(input + "\n" );
+    	logText.append(getTimeStamp() + input + "\n" );
         logText.setCaretPosition( logText.getText().length());
     
     }

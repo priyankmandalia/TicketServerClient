@@ -42,9 +42,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private int numberOfClientsConnected;
     private int indexOfReplica = 0;
     private boolean connectedToLeader = false;
-    private int noofreplicaleaders = 0;
-    private int noofreplicas = 0;
-    private String[] actualReplicas;
+    //private String[] actualReplicas;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -79,20 +77,14 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         
         this.myIP = getMyIp();
         
+        paramReader params = new paramReader("partitions.xml", "replicas.xml");
+        replicaIPs = params.getReplicas();
+        partitionIPs = params.getPartitions();
         
-        noofreplicaleaders = replicaIPs.length;
-        noofreplicas = partitionIPs.length;
-        
-         //assign replicas to each Partition leader
-        
-//        System.out.println(actualReplicas[0]);
-        
-//        this.replicaElectionManager = new ElectionManager(actualReplicas, RMI.REPLICA); //Change replicaIPs to actualReplicas
-//        System.out.println("done replica");
+        this.replicaElectionManager = new ElectionManager(replicaIPs, RMI.REPLICA); //Change replicaIPs to actualReplicas
+        gui.addStringAndUpdate("Replica Manager Running.");
         this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION);
         gui.addStringAndUpdate("Partition Manager Running.");
-        
-        
         
 
     }
@@ -152,7 +144,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public void updateReplicas() throws RemoteException, NotBoundException {
          //getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
         // loop through replicas and replicate own events
-        for (String replicaIP : actualReplicas) {
+        String replicas[] = replicaElectionManager.getActiveReplicas();
+        for (String replicaIP : replicas) {
             
             connectServer(replicaIP);
             rmi.replicate(events);
@@ -299,7 +292,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public void replicate(ArrayList<Event> latest) throws RemoteException {
-
+        gui.addStringAndUpdate("Replicated");
         this.events = latest;
         gui.addStringAndUpdate("Server Updated");
 
@@ -307,6 +300,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public boolean isRunning() throws RemoteException {
+        
         return true;
     }
 
@@ -347,7 +341,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
             }
 
         }
-        
+        gui.addStringAndUpdate("Leader Compared");
         
         return IP;
     }
@@ -362,40 +356,46 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public int getNumberOfEvents() throws RemoteException {
+        gui.addStringAndUpdate("Number of events returned");
         return amountOfEvents;
     }
 
     @Override
     public int getNumberOfConnections() throws RemoteException {
-        
+        gui.addStringAndUpdate("Number of connections returned");
         return numberOfClientsConnected;
         
     }
 
     @Override
     public void notifyConnected() throws RemoteException {
-        
+        gui.addStringAndUpdate("Client Connected");
         numberOfClientsConnected++;
         
     }
     
     @Override
     public void notifyDisconnected() throws RemoteException {
-        
+        gui.addStringAndUpdate("Client Disconnected");
         numberOfClientsConnected--;
         
     }
 
     @Override
     public String getReadServer() throws RemoteException {
+        gui.addStringAndUpdate("Read Server Assigned To Client");
          //getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
-        if(indexOfReplica == actualReplicas.length){
+        if(indexOfReplica == replicaElectionManager.getActiveReplicas().length){
         
             indexOfReplica = 0;
         
+        }else{        
+        
+            indexOfReplica++;
+            
         }
         
-        return actualReplicas[indexOfReplica];
+        return replicaElectionManager.getActiveReplicas()[indexOfReplica];
         
     }
 
@@ -410,6 +410,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
                 Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
             }
             connectedToLeader = true;
+            gui.addStringAndUpdate("Claimed As Replica By:" + ip);
             return true;
         
         }
