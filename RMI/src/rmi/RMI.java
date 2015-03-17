@@ -25,13 +25,19 @@ public interface RMI extends Remote{
         
         public ArrayList<String> searchEvents(String query) throws RemoteException;
         
-        public ArrayList<String> getEvents() throws RemoteException;
+        public ArrayList<String> getEventTitles() throws RemoteException;
+        
+        public ArrayList<String> serverGetEventTitles() throws RemoteException;
+        
+        public ArrayList<Event> getEvents() throws RemoteException;
+        
+        public ArrayList<Event> serverGetEvents() throws RemoteException;
         
         public ArrayList<String> getServers() throws RemoteException;
         
         public ArrayList<String> getBookings(String event) throws RemoteException;
         
-        public boolean book(String event, String customer, int amount) throws RemoteException;
+        public boolean book(String event, String customer, int amount) throws RemoteException, NotBoundException;
         
         public boolean addEvent(String name, String description) throws RemoteException, NotBoundException;
         

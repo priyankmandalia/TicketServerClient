@@ -46,7 +46,7 @@ public class RMIClient extends JFrame {
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
     private String chosenIpAddress;
-    public static String[] leadServerIPs = {"109.157.191.99", "127.0.0.1"};
+    public static String[] leadServerIPs = {"148.197.41.49"};
     public static String NewServer;
     private static String writeServer;
     private static String readServer;
@@ -94,6 +94,7 @@ public class RMIClient extends JFrame {
         connectServer(lowestLoadServer);
         writeServer = lowestLoadServer;
         readServer = rmi.getReadServer();
+        System.out.println("read - "+readServer);
 
     }
     
@@ -199,7 +200,7 @@ public class RMIClient extends JFrame {
 
         this.setSize(1000, 500);
         this.setVisible(true);
-        //this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     }
     
@@ -333,6 +334,7 @@ public class RMIClient extends JFrame {
                 String s = searchfield.getText();
 
                 try {
+                    System.out.println("reading from - " + readServer);
                     connectServer(readServer);
                     ArrayList<String> events = rmi.searchEvents(s);
                     System.out.println(events);

@@ -3,12 +3,6 @@
 	
     <partition id = "0">
                 
-        <ip>148.197.42.54</ip>
+        <ip>148.197.41.49</ip>
         
-        </partition>
-	<partition id = "1">
-            
-        <ip>127.169.346</ip>
-        
-        </partition>
-</partitions>
+        </partition></partitions>
