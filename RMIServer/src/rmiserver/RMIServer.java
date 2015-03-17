@@ -1,6 +1,5 @@
 package rmiserver;
 
-
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -102,7 +101,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     }
 
-    private Event getEventByExactName(String event) {
+    @Override
+    public Event getEventByExactName(String event) {
 
         // loop through events and compare titles exactly to the input string
         gui.addStringAndUpdate("Precise event queried: " + event);
@@ -184,10 +184,10 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         ArrayList<String> results = new ArrayList();
         gui.addStringAndUpdate("Events searched for - " + query);
-        ArrayList<String> allSystemEvents = getEventTitles();
+        ArrayList<Event> allSystemEvents = getEvents();
         if (!query.matches("")) {
 
-            for (Event event : events) {
+            for (Event event : allSystemEvents) {
 
                 String title = event.getTitle();
                 String description = event.getDescription();
@@ -219,13 +219,32 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public boolean book(String event, String customer, int amount) throws RemoteException, NotBoundException {
 
         Event e = getEventByExactName(event);
-        int size = e.getBookingSize();
-        e.addBooking(amount + " tickets for " + customer);
-        if (size < e.getBookingSize()) {
+        if (e == null) {
 
-            gui.addStringAndUpdate(customer + " booked " + amount + " tickets to " + event);
-            updateReplicas();
-            return true;
+            for (int i = 0; i < partitionIPs.length; i++) {
+
+                connectServer(partitionIPs[i]);
+                e = rmi.getEventByExactName(event);
+                if (e != null) {
+
+                    if(rmi.book(event, customer, amount)){
+                    
+                        return true;
+                    
+                    }
+                }
+            }
+        } else {
+
+            int size = e.getBookingSize();
+            e.addBooking(amount + " tickets for " + customer);
+            if (size < e.getBookingSize()) {
+
+                gui.addStringAndUpdate(customer + " booked " + amount + " tickets to " + event);
+                updateReplicas();
+                return true;
+
+            }
 
         }
 
@@ -244,16 +263,16 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
             titles.add(eventi.getTitle());
 
         }
-        
-        for(int i = 0; i < partitionIPs.length; i++){
-            
+
+        for (int i = 0; i < partitionIPs.length; i++) {
+
             try {
                 connectServer(partitionIPs[i]);
             } catch (NotBoundException ex) {
                 Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
             }
             titles.addAll(rmi.serverGetEventTitles());
-        
+
         }
 
         return titles;
@@ -341,7 +360,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 //        }
 //
 //        gui.addStringAndUpdate("Leader Compared");
-
         return null;
     }
 
@@ -384,14 +402,14 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public String getReadServer() throws RemoteException {
         gui.addStringAndUpdate("Read Server Assigned To Client");
         //getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
-        if (indexOfReplica == replicaElectionManager.getActiveReplicas().size()-1) {
+        if (indexOfReplica == replicaElectionManager.getActiveReplicas().size() - 1) {
 
             indexOfReplica = 0;
 
         } else {
-            
-            if(indexOfReplica <= replicaElectionManager.getActiveReplicas().size()-1){
-            indexOfReplica++;
+
+            if (indexOfReplica <= replicaElectionManager.getActiveReplicas().size() - 1) {
+                indexOfReplica++;
             }
 
         }
@@ -434,32 +452,32 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
             titles.add(eventi.getTitle());
 
         }
-        
+
         return titles;
     }
-    
+
     @Override
     public ArrayList<Event> serverGetEvents() throws RemoteException {
-        
+
         return events;
-        
+
     }
-    
+
     @Override
     public ArrayList<Event> getEvents() throws RemoteException {
 
         gui.addStringAndUpdate("List of events returned");
         ArrayList<Event> results = events;
-        
-        for(int i = 0; i < partitionIPs.length; i++){
-            
+
+        for (int i = 0; i < partitionIPs.length; i++) {
+
             try {
                 connectServer(partitionIPs[i]);
             } catch (NotBoundException ex) {
                 Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
             }
             results.addAll(rmi.serverGetEvents());
-        
+
         }
 
         return results;

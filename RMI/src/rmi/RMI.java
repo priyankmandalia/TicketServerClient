@@ -61,6 +61,8 @@ public interface RMI extends Remote{
         
         public boolean claimAsReplica(String ip) throws RemoteException;
         
+        public Event getEventByExactName(String event) throws RemoteException;
+        
         
 }
 
