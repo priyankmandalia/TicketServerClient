@@ -363,13 +363,14 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public String getReadServer() throws RemoteException {
         gui.addStringAndUpdate("Read Server Assigned To Client");
         //getReplicas(noofreplicas, noofreplicas); //assign replicas to each Partition leader
-        if (indexOfReplica == replicaElectionManager.getActiveReplicas().length) {
+        if (indexOfReplica == replicaElectionManager.getActiveReplicas().length-1) {
 
             indexOfReplica = 0;
 
         } else {
-
+            if(indexOfReplica <= replicaElectionManager.getActiveReplicas().length-1){
             indexOfReplica++;
+            }
 
         }
 
