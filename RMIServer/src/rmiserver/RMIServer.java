@@ -39,7 +39,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     String replicaIPs[];
     String partitionIPs[];
-    boolean partitionKeeperRunning = true;
     private final String myIP;
     private int amountOfEvents;
     private int numberOfClientsConnected;
@@ -482,6 +481,16 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         return results;
 
+    }
+
+    @Override
+    public String getWriteServer() throws RemoteException {
+        return replicaElectionManager.getCurrentLeaderIp();
+    }
+
+    @Override
+    public ArrayList<String> getActiveReplicas() throws RemoteException {
+        return replicaElectionManager.getActiveReplicas();
     }
 
 }

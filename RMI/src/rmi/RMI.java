@@ -59,9 +59,13 @@ public interface RMI extends Remote{
         
         public String getReadServer() throws RemoteException;
         
+        public String getWriteServer() throws RemoteException;
+        
         public boolean claimAsReplica(String ip) throws RemoteException;
         
         public Event getEventByExactName(String event) throws RemoteException;
+        
+        public ArrayList<String> getActiveReplicas() throws RemoteException;
         
         
 }

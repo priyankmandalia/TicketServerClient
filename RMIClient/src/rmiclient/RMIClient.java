@@ -14,6 +14,8 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -27,6 +29,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.xml.parsers.ParserConfigurationException;
+import org.xml.sax.SAXException;
 import rmi.RMI;
 
 /*
@@ -50,16 +54,22 @@ public class RMIClient extends JFrame {
     public static String NewServer;
     private static String writeServer;
     private static String readServer;
-     private static int i = -1;
+    private static int i = -1;
+    private static String replicaIPs[];
+    private static String partitionIPs[];
 
     private static Map<String, Integer> map = new HashMap<>();
 
-    public static void main(String args[]) throws RemoteException, NotBoundException {
+    public static void main(String args[]) throws RemoteException, NotBoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException {
 
         connectLowestLoadServer();
         rmi.notifyConnected();
         leadServerIPs = rmi.getIPaddresses();
         RMIClient obj = new RMIClient();
+        
+        paramReader params = new paramReader("partitions.xml", "replicas.xml");
+        replicaIPs = params.getReplicas();
+        partitionIPs = params.getPartitions();
 
     }
 
@@ -119,39 +129,47 @@ public class RMIClient extends JFrame {
                             }
 
                         } catch (RemoteException ex) {
-                            try {
                                 getRunnerUp();
                                 System.out.println("Leader crashed");
-                            } catch (RemoteException ex1) {
-                                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
-                            } catch (NotBoundException ex1) {
-                                Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex1);
-                            }
 
                         } 
 
     }
     
-    private static void getRunnerUp() throws RemoteException, NotBoundException {
-                
-                NewServer = getNextServer();
-                connectServer(NewServer);
-                System.out.println("NewServer IP: "+NewServer);
+    private static void getRunnerUp() throws NotBoundException, RemoteException  {
+          
+              
+        try {
+            
+            connectServer(readServer);
+            
+            
+        } catch (RemoteException ex) {
+            while(!rmi.isRunning()){
+            
+                connectServer(getNextServer());
+            
+            }
+        }
+        
+        writeServer = rmi.getWriteServer();
+        connectServer(writeServer);
+        readServer = rmi.getReadServer();
                 
     }
 
    private static String getNextServer(){
          
          
-         if(i < leadServerIPs.length-1){
+         if(i < replicaIPs.length-1){
          i++;
          }
          else{
          i=0;
          }
-         System.out.println("List length: "+leadServerIPs.length);
+         System.out.println("List length: "+replicaIPs.length);
          System.out.println("Index: "+i);
-         String s = leadServerIPs[i];
+         String s = replicaIPs[i];
          
          
          

@@ -4,7 +4,6 @@ package rmiserver;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -50,19 +49,19 @@ public class ElectionManager {
 
         this.params = new paramReader("partitions.xml", "replicas.xml");
         this.noOfReplicas = this.replicaIPs.length;
-        
+
         this.partitionIPs = params.getPartitions();
         noOfPartitions = this.partitionIPs.length;
 
-        for(int i = 0; i < partitionIPs.length; i++){
-            if(partitionIPs[i].matches(myIP)){
-            
+        for (int i = 0; i < partitionIPs.length; i++) {
+            if (partitionIPs[i].matches(myIP)) {
+
                 isPartition = true;
-            
+
             }
-        
+
         }
-        
+
         this.gui = gui;
 
         go();
@@ -77,12 +76,15 @@ public class ElectionManager {
             @Override
             public void run() {
 
+                // get own IP
+                String myIP = null;
                 try {
-
-                    // get own IP
-                    String myIP = getMyIp();
-                    // loop through all other ip's, connect and compare own ip with their leader ip
-                    // to check if this server needs to bully
+                    myIP = getMyIp();
+                } catch (IOException ex) {
+                    gui.addStringAndUpdate("get my ip fail - " + ex.getMessage());
+                }
+                // loop through all other ip's, connect and compare own ip with their leader ip
+                // to check if this server needs to bully
 //                    for (String ip : replicaIPs) {
 //
 //                        if (!ip.matches(myIP)) {
@@ -99,71 +101,71 @@ public class ElectionManager {
 //                            }
 //                        }
 //                    }
-                    // check if this leader is or has become the leader
-                    // if so, stop the the heartbeat as this is only for 
-                    // ensuring leader is responding
-                    if (/*serversAlive == 0 &&*/ isPartition) {
+                // check if this leader is or has become the leader
+                // if so, stop the the heartbeat as this is only for 
+                // ensuring leader is responding
+                if (/*serversAlive == 0 &&*/isPartition) {
 
-                        // election has gone wrong, this becomes leader
-                        //gui.addStringAndUpdate("Error, couldnt find leader");
-                        gui.addStringAndUpdate("This server is Leader");
-                        currentLeaderIp = myIP;
-                        claimReplicas(noOfPartitions, noOfReplicas);
+                    // election has gone wrong, this becomes leader
+                    //gui.addStringAndUpdate("Error, couldnt find leader");
+                    gui.addStringAndUpdate("This server is Leader");
+                    currentLeaderIp = myIP;
+                    claimReplicas(noOfPartitions, noOfReplicas);
 
-                        
+                } else {
 
-                    }else{
-                    
-                        gui.addStringAndUpdate("This server is Replica");            
-                    
-                    }/* else if (currentLeaderIp.matches(myIP) && isPartition) {
+                    gui.addStringAndUpdate("This server is Replica");
 
-                        // this is the leader
-                        heartbeat = false;
-                        gui.addStringAndUpdate("This Server is leader");
-                        getReplicas(noOfPartitions, noOfReplicas);
+                }/* else if (currentLeaderIp.matches(myIP) && isPartition) {
+
+                 // this is the leader
+                 heartbeat = false;
+                 gui.addStringAndUpdate("This Server is leader");
+                 getReplicas(noOfPartitions, noOfReplicas);
                         
                         
 
-                    }*/
-                    //loop forever, if not leader continuously check if leader is alive
-                    // if leader, dont check but stay in loop incase of bully situation
-                    while (true) {
+                 }*/
+                //loop forever, if not leader continuously check if leader is alive
+                // if leader, dont check but stay in loop incase of bully situation
 
-                        if (currentLeaderIp != null && !currentLeaderIp.matches(myIP)) {
+                while (true) {
 
-                            try {
+                    if (currentLeaderIp != null && !currentLeaderIp.matches(myIP)) {
 
-                                // check if leader is alive 
-                                if (rmi.isRunning()) {
+                        try {
+                            // check if leader is alive
+                            if (rmi.isRunning()) {
 
-                                    gui.addStringAndUpdate("Leader " + currentLeaderIp + " is running");
-
-                                }
-                                // every 2 seconds
-                                Thread.sleep(2000);
-
-                            } catch (RemoteException ex) {
-
-                                try {
-                                    // leader has crashed, connection to leader raised exception
-                                    // connect to next highest ip
-                                    connectToRunnerUp();
-                                    gui.addStringAndUpdate("Leader crashed");
-                                } catch (RemoteException ex1) {
-                                    Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                                } catch (NotBoundException ex1) {
-                                    Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
-                                }
-
-                            } catch (InterruptedException ex) {
+                                //activeReplicas.addAll(rmi.getActiveReplicas());
+                                gui.addStringAndUpdate("Leader " + currentLeaderIp + " is running");
 
                             }
+                        } catch (RemoteException ex) {
+                            
+                            // leader has crashed, connection to leader raised exception
+                            // connect to next highest ip
+                            gui.addStringAndUpdate("Leader crashed or corrupt");
+                            try {
+                                connectToRunnerUp();
+                            } catch (RemoteException ex1) {
+                                Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                            } catch (NotBoundException ex1) {
+                                Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                            }
+                            
                         }
-                    }
-                } catch (Exception e) {
+                        
+                        try {
+                            // every 2 seconds
+                            Thread.sleep(2000);
+                        } catch (InterruptedException ex) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex);
+                        }
 
+                    }
                 }
+
             }
         });
         // start thread defined above
@@ -193,7 +195,7 @@ public class ElectionManager {
                         }
                     }
                 } catch (RemoteException | NotBoundException ex) {
-                    Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+                    gui.addStringAndUpdate(ex.getMessage());
                 }
             }
         }
@@ -212,16 +214,19 @@ public class ElectionManager {
         double highest = 0;
         // loop through all ip addresses, converting to doubles for value comparison
         // reuturn the highest found, do not include current leader as this has crashed
+        gui.addStringAndUpdate("loop for - " + activeReplicas.size());
         for (int i = 0; i < activeReplicas.size(); i++) {
+            gui.addStringAndUpdate("for loop" + i);
 
             if (getDoubleIPAddress(activeReplicas.get(i)) > highest && !currentLeader.matches(activeReplicas.get(i))) {
-
+                gui.addStringAndUpdate("if");
                 highest = getDoubleIPAddress(activeReplicas.get(i));
                 index = i;
 
             }
 
         }
+        gui.addStringAndUpdate("next leader found");
         return activeReplicas.get(index);
 
     }
@@ -250,8 +255,23 @@ public class ElectionManager {
     private void connectToRunnerUp() throws RemoteException, NotBoundException {
 
         // get next highest leader and connect to it
-        currentLeaderIp = getNextLeader(currentLeaderIp);
+        claimReplicas(noOfPartitions, noOfReplicas);
+        gui.addStringAndUpdate("1");
+        gui.addStringAndUpdate(currentLeaderIp);
+        String temp = getNextLeader(currentLeaderIp);
+        currentLeaderIp = temp;
+        gui.addStringAndUpdate("2");
         connectServer(currentLeaderIp);
+        gui.addStringAndUpdate("3");
+        if (currentLeaderIp.matches(myIP)) {
+
+            gui.addStringAndUpdate("This is the new leader");
+
+        } else {
+
+            gui.addStringAndUpdate("New leader is - " + currentLeaderIp);
+
+        }
 
     }
 
