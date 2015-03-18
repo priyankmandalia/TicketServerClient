@@ -180,11 +180,10 @@ public class ElectionManager {
         gui.addStringAndUpdate("Attempting to claim " + needed + " of " + replicas + " Replicas");
         activeReplicas = new ArrayList<>();
         int j = 0;
-        while (activeReplicas.size() < needed) {
             for (String replicaIP : replicaIPs) {
                 gui.addStringAndUpdate("trying - " + replicaIP);
                 try {
-                    if (!replicaIP.matches(myIP)) {
+                    if (!replicaIP.matches(myIP) && activeReplicas.size() < needed) {
                         gui.addStringAndUpdate("Connecting to possible replica");
                         System.out.println(replicaIP);
                         connectServer(replicaIP);
@@ -198,7 +197,7 @@ public class ElectionManager {
                     gui.addStringAndUpdate(ex.getMessage());
                 }
             }
-        }
+        
 
     }
 
