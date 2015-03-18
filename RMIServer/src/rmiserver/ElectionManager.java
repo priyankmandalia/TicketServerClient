@@ -37,6 +37,7 @@ public class ElectionManager {
     private final String myIP;
     private final GUI gui;
     private boolean isPartition = false;
+    public boolean isLeader = false;
 
     public ElectionManager(String[] replicaips, GUI gui) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -110,11 +111,13 @@ public class ElectionManager {
                     //gui.addStringAndUpdate("Error, couldnt find leader");
                     gui.addStringAndUpdate("This server is Leader");
                     currentLeaderIp = myIP;
+                    isLeader = true;
                     claimReplicas(noOfPartitions, noOfReplicas);
 
                 } else {
 
                     gui.addStringAndUpdate("This server is Replica");
+                    isLeader = false;
 
                 }/* else if (currentLeaderIp.matches(myIP) && isPartition) {
 
@@ -131,6 +134,7 @@ public class ElectionManager {
 
                 while (true) {
 
+                    //gui.addStringAndUpdate(currentLeaderIp);
                     if (currentLeaderIp != null && !currentLeaderIp.matches(myIP)) {
 
                         try {
@@ -179,7 +183,7 @@ public class ElectionManager {
         int needed = replicas / leaders;
         gui.addStringAndUpdate("Attempting to claim " + needed + " of " + replicas + " Replicas");
         activeReplicas = new ArrayList<>();
-        int j = 0;
+        
             for (String replicaIP : replicaIPs) {
                 gui.addStringAndUpdate("trying - " + replicaIP);
                 try {
@@ -190,7 +194,6 @@ public class ElectionManager {
                         if (rmi.claimAsReplica(myIP)) {
                             gui.addStringAndUpdate("Found Replica");
                             activeReplicas.add(replicaIP);
-                            j++;
                         }
                     }
                 } catch (RemoteException | NotBoundException ex) {
@@ -199,7 +202,7 @@ public class ElectionManager {
             }
         
 
-    }
+            }
 
     public ArrayList<String> getActiveReplicas() {
 
@@ -265,10 +268,14 @@ public class ElectionManager {
         if (currentLeaderIp.matches(myIP)) {
 
             gui.addStringAndUpdate("This is the new leader");
+            isLeader = true;
+
 
         } else {
 
             gui.addStringAndUpdate("New leader is - " + currentLeaderIp);
+            isLeader = false;
+
 
         }
 
@@ -306,8 +313,11 @@ public class ElectionManager {
     }
 
     public void setCurrentLeaderIp(String currentLeaderIp) throws RemoteException, NotBoundException {
-        connectServer(currentLeaderIp);
+        
         this.currentLeaderIp = currentLeaderIp;
+        connectServer(currentLeaderIp);
+        this.isLeader = false;
+        
     }
 
     private double getDoubleIPAddress(String ip) {

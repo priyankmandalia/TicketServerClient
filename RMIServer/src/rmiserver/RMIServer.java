@@ -420,22 +420,19 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public boolean claimAsReplica(String ip) throws RemoteException {
 
-        if (!connectedToLeader) {
-
+        if (!replicaElectionManager.isLeader) {
+            
             try {
-                connectServer(ip);
-            } catch (NotBoundException ex) {
-                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            connectedToLeader = true;
-            try {
+                
                 replicaElectionManager.setCurrentLeaderIp(ip);
+                connectedToLeader = true;
+                gui.addStringAndUpdate("Claimed As Replica By:" + ip);
+                return true;
+                
             } catch (NotBoundException ex) {
-                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+                gui.addStringAndUpdate("claimasreplica fail - " + ex.getMessage());
+                return false;
             }
-            gui.addStringAndUpdate("Claimed As Replica By:" + ip);
-            return true;
-
         }
 
         return false;
@@ -485,6 +482,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
     @Override
     public String getWriteServer() throws RemoteException {
+        gui.addStringAndUpdate("write server assigned -" + replicaElectionManager.getCurrentLeaderIp());
         return replicaElectionManager.getCurrentLeaderIp();
     }
 

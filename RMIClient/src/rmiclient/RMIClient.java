@@ -50,7 +50,6 @@ public class RMIClient extends JFrame {
     static ArrayList<String> listData;
     static ArrayList<String> bookingData;
     private String chosenIpAddress;
-    public static String[] leadServerIPs = {"148.197.41.49"};
     public static String NewServer;
     private static String writeServer;
     private static String readServer;
@@ -62,14 +61,15 @@ public class RMIClient extends JFrame {
 
     public static void main(String args[]) throws RemoteException, NotBoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException {
 
-        connectLowestLoadServer();
-        rmi.notifyConnected();
-        leadServerIPs = rmi.getIPaddresses();
-        RMIClient obj = new RMIClient();
-        
         paramReader params = new paramReader("partitions.xml", "replicas.xml");
         replicaIPs = params.getReplicas();
         partitionIPs = params.getPartitions();
+        
+        connectLowestLoadServer();
+        rmi.notifyConnected();
+        RMIClient obj = new RMIClient();
+        
+        
 
     }
 
@@ -79,7 +79,7 @@ public class RMIClient extends JFrame {
         int lowestLoad = -1;
         String lowestLoadServer = null;
         
-        for (String leadServerIP : leadServerIPs) {
+        for (String leadServerIP : partitionIPs) {
             
             try {
                 
@@ -129,7 +129,7 @@ public class RMIClient extends JFrame {
                             }
 
                         } catch (RemoteException ex) {
-                                getRunnerUp();
+                                
                                 System.out.println("Leader crashed");
 
                         } 
@@ -181,8 +181,8 @@ public class RMIClient extends JFrame {
     //Adds amount of loads of all the server in hashmap
     private static void getnumberOfClientsConn() throws RemoteException, NotBoundException {
         int count;
-        for (int i = 0; i < leadServerIPs.length - 1; i++) {
-            String s = leadServerIPs[i];
+        for (int i = 0; i < partitionIPs.length - 1; i++) {
+            String s = partitionIPs[i];
             connectServer(s);
             count = rmi.getNumberOfConnections();
             System.out.println("Server " + i + ": " + s);
@@ -409,7 +409,14 @@ public class RMIClient extends JFrame {
                     connectServer(writeServer);
                     rmi.book(listbox.getSelectedValue().toString(), customer.getText(), Integer.parseInt(tickets.getText()));
                 } catch (RemoteException e1) {
-                    // TODO Auto-generated catch block
+                    try {
+                        // TODO Auto-generated catch block
+                        getRunnerUp();
+                    } catch (NotBoundException ex) {
+                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (RemoteException ex) {
+                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     System.out.println(e1.getMessage());
                 } catch (NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -493,7 +500,14 @@ public class RMIClient extends JFrame {
                     connectServer(writeServer);
                     rmi.addEvent(eventname.getText(), description.getText());
                 } catch (RemoteException e1) {
-                    // TODO Auto-generated catch block
+                    try {
+                        // TODO Auto-generated catch block
+                        getRunnerUp();
+                    } catch (NotBoundException ex) {
+                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (RemoteException ex) {
+                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     System.out.println(e1.getMessage());
                 } catch (NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -573,7 +587,7 @@ public class RMIClient extends JFrame {
 //                "148.197.27.155",
 //                "148.197.27.156"
 //            };
-        addresslist = new JList(leadServerIPs);
+        addresslist = new JList(partitionIPs);
         //     listbox = new JList(listData);
         addresslist.setBackground(Color.white);
         addresslist.setFont(font);
