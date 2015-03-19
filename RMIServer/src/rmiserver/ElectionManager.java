@@ -29,7 +29,7 @@ import rmi.RMI;
  */
 public class ElectionManager {
 
-    private RMI rmi;
+    public RMI rmi;
     private String currentLeaderIp;
     private final String[] replicaIPs;
     private final String[] partitionIPs;

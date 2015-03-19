@@ -309,11 +309,11 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         gui.addStringAndUpdate("List of events returned");
         ArrayList<String> titles = new ArrayList();
 
-        for (Event eventi : events) {
-
-            titles.add(eventi.getTitle());
-
-        }
+//        for (Event eventi : events) {
+//
+//            titles.add(eventi.getTitle());
+//
+//        }
 
         for (int i = 0; i < partitionIPs.length; i++) {
 
@@ -492,6 +492,9 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
                 connectedToLeader = true;
                
                 gui.addStringAndUpdate("Claimed As Replica By:" + ip);
+                if(events != null){
+                replicaElectionManager.rmi.replicate(events);
+                }
                 return true;
                 
             } catch (NotBoundException ex) {
