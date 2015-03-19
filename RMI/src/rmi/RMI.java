@@ -53,7 +53,7 @@ public interface RMI extends Remote{
         
         public int getNumberOfConnections() throws RemoteException;
         
-        public void notifyConnected(String ip) throws RemoteException;
+        public void notifyConnected(String whosconnected) throws RemoteException;
         
         public void notifyDisconnected() throws RemoteException;
         

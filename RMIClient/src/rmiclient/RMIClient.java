@@ -35,7 +35,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
-import rmi.RMI;
+import rmi.*;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -58,62 +58,131 @@ public class RMIClient extends JFrame {
     private static String writeServer;
     private static String readServer;
     private static int i = -1;
-    private static String replicaIPs[];
-    private static String partitionIPs[];
+    private static String[] serverIPs;
     private static String myIP;
 
     private static Map<String, Integer> map = new HashMap<>();
 
-    public static void main(String args[]) throws RemoteException, NotBoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException {
+    public static void main(String args[]) throws RemoteException, NotBoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException, InterruptedException {
 
         myIP = getMyIp();
         
-        paramReader params = new paramReader("partitions.xml", "replicas.xml");
-        replicaIPs = params.getReplicas();
-        partitionIPs = params.getPartitions();
+        paramReader params = new paramReader("servers.xml");
+        
+        serverIPs = params.getServers();
+
         
         connectLowestLoadServer();
-        rmi.notifyConnected(myIP);
+        
         RMIClient obj = new RMIClient();
         
-        
+        startNotifyTimer();
+
+    }
+    
+    private static void startNotifyTimer() throws RemoteException, NotBoundException, IOException, InterruptedException {
+
+        Thread t = new Thread(new Runnable() {
+
+            int serversAlive;
+
+            @Override
+            public void run() {
+
+                while(true){
+                    
+                    if(writeServer != null){
+                    try {
+                        
+                        connectServer(writeServer);
+                        rmi.notifyConnected(myIP);
+                        
+                    } catch (RemoteException ex) {
+                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (NotBoundException ex) {
+                        Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    }else{
+                        
+                        System.out.println("write server not available");
+                
+                    }
+                    
+                    try {
+                            // every 2 seconds
+                            Thread.sleep(2000);
+                            
+                    } catch (InterruptedException ex) {
+                        System.out.println("timer sleep fail");
+                    }
+                }
+            }});
+        // start thread defined above
+        t.start();
 
     }
 
-    private static void connectLowestLoadServer() throws RemoteException, NotBoundException {
+    private static void connectLowestLoadServer() throws RemoteException, NotBoundException { 
 
-        int load = 0;
+        int load;
         int lowestLoad = -1;
         String lowestLoadServer = null;
         
-        for (String leadServerIP : partitionIPs) {
+        for (String ServerIP : serverIPs) {
             
             try {
                 
-                connectServer(leadServerIP);
+                connectServer(ServerIP);
+                String serverip = rmi.getWriteServer();
+                if(!serverip.matches(ServerIP)){
                 
-                load = rmi.getNumberOfConnections();
+                    connectServer(serverip);
+
+                    load = rmi.getNumberOfConnections();
+
+                    if(load < lowestLoad || lowestLoad < 0){
+
+                    lowestLoad = load;
+                    lowestLoadServer = serverip;
+
+                    }
                 
-                if(load < lowestLoad || lowestLoad < 0){
-            
-                lowestLoad = load;
-                lowestLoadServer = leadServerIP;
-            
-            }
+                }else{
+                
+                    load = rmi.getNumberOfConnections();
+
+                    if(load < lowestLoad || lowestLoad < 0){
+
+                    lowestLoad = load;
+                    lowestLoadServer = ServerIP;
+
+                    }
+                
+                }
                 
             }catch (RemoteException ex) {
                 
-                System.out.println("Failed to connect to - " + leadServerIP);
+                System.out.println("Failed to connect to - " + ServerIP);
                 
             }
         }
         
-        connectServer(lowestLoadServer);
-        writeServer = lowestLoadServer;
-        readServer = rmi.getReadServer();
-        System.out.println("read - "+readServer);
+        if(lowestLoadServer != null){
+            
+            connectServer(lowestLoadServer);
+            writeServer = lowestLoadServer;
+            readServer = rmi.getReadServer();
+            System.out.println("read - "+readServer);
+            rmi.notifyConnected(myIP);
+            
+        }else{
+            
+            System.out.println("connect lowest load server fail");
+        
+        }
 
     }
+
     
     public static String getMyIp() throws MalformedURLException, IOException {
 
@@ -178,15 +247,15 @@ public class RMIClient extends JFrame {
    private static String getNextServer(){
          
          
-         if(i < replicaIPs.length-1){
+         if(i < serverIPs.length-1){
          i++;
          }
          else{
          i=0;
          }
-         System.out.println("List length: "+replicaIPs.length);
+         System.out.println("List length: "+serverIPs.length);
          System.out.println("Index: "+i);
-         String s = replicaIPs[i];
+         String s = serverIPs[i];
          
          
          
@@ -198,8 +267,8 @@ public class RMIClient extends JFrame {
     //Adds amount of loads of all the server in hashmap
     private static void getnumberOfClientsConn() throws RemoteException, NotBoundException {
         int count;
-        for (int i = 0; i < partitionIPs.length - 1; i++) {
-            String s = partitionIPs[i];
+        for (int i = 0; i < serverIPs.length - 1; i++) {
+            String s = serverIPs[i];
             connectServer(s);
             count = rmi.getNumberOfConnections();
             System.out.println("Server " + i + ": " + s);
@@ -514,7 +583,7 @@ public class RMIClient extends JFrame {
                   //  getnumberOfClientsConn();
                   //  String IP = getServerWithLeastLoad();
                   //  connectServer(IP);                   //Connects with server with least amount of load
-                    connectServer(writeServer);
+                    connectLowestLoadServer();
                     rmi.addEvent(eventname.getText(), description.getText());
                 } catch (RemoteException e1) {
                     try {
@@ -577,7 +646,7 @@ public class RMIClient extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 try {
                     //To Do
-                    connectServer(chosenIpAddress);
+                    connectLowestLoadServer();
                     listData = rmi.getEventTitles();
                 } catch (RemoteException | NotBoundException ex) {
                     Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -604,7 +673,7 @@ public class RMIClient extends JFrame {
 //                "148.197.27.155",
 //                "148.197.27.156"
 //            };
-        addresslist = new JList(partitionIPs);
+        addresslist = new JList(serverIPs);
         //     listbox = new JList(listData);
         addresslist.setBackground(Color.white);
         addresslist.setFont(font);

@@ -28,55 +28,28 @@ import org.xml.sax.SAXException;
  */
 public class paramReader {
 
-    Document replicas, partitions;
+    Document servers;
     
-    public paramReader(String nameOfPartitionFile, String nameOfReplicaFile) throws ParserConfigurationException, SAXException, IOException, URISyntaxException {
+    public paramReader(String nameOfServersFile) throws ParserConfigurationException, SAXException, IOException, URISyntaxException {
         
-        File file = new File(nameOfReplicaFile);
+        File file = new File(nameOfServersFile);
 	DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 	DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-	replicas = dBuilder.parse(file);
+	
         
-        file = new File(nameOfPartitionFile);
-	partitions = dBuilder.parse(file);
+        
+	servers = dBuilder.parse(file);
         
     }
     
-    public String[] getReplicas(){
+ 
     
-        Node nNode;
-        Element eElement;
-        ArrayList<String> result = new ArrayList<>();
-        NodeList nList = replicas.getElementsByTagName("replica");
-        for(int i = 0; i < nList.getLength(); i++){
-        
-            nNode = nList.item(i);
-            eElement = (Element) nNode;
-           result.add(eElement.getElementsByTagName("ip").item(0).getTextContent());
-//            System.out.println(" id : " + eElement.getAttribute("id"));
-//            System.out.println("ip : " + eElement.getElementsByTagName("ip").item(0).getTextContent());
-
-        
-        }
-        
-        String[] temp = new String[result.size()];
-        temp = result.toArray(temp);
-        for(int i=0; i<result.size(); i++){
-        
-            temp[i] = result.get(i);
-        
-        }
-            
-        
-        return temp;
-    }
-    
-    public String[] getPartitions(){
+    public String[] getServers(){
         
         Node nNode;
         Element eElement;
         ArrayList<String> result = new ArrayList<>();
-        NodeList nList = partitions.getElementsByTagName("partition");
+        NodeList nList = servers.getElementsByTagName("server");
         for(int i = 0; i < nList.getLength(); i++){
         
             nNode = nList.item(i);

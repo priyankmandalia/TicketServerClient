@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 import rmi.*;
-import static rmiserver.ElectionManager.getMyIp;
 
 
 /*
@@ -93,10 +92,11 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         gui.addStringAndUpdate("Replica Manager Running");
         //this.partitionElectionManager = new ElectionManager(partitionIPs, RMI.PARTITION, gui);
         //gui.addStringAndUpdate("Partition Manager Running");
+        startActiveClientListener();
 
     }
     
-    private void go() throws RemoteException, NotBoundException, IOException, InterruptedException {
+    private void startActiveClientListener() throws RemoteException, NotBoundException, IOException, InterruptedException {
 
         Thread t = new Thread(new Runnable() {
 
@@ -106,7 +106,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
             public void run() {
 
                 while(true){
-                
+                    
+                    if(replicaElectionManager.isLeader){
                     double currentTime = getTimeStamp();
                     Iterator it = hash.entrySet().iterator();
                     
@@ -128,7 +129,8 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
                             Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 
-                }                
+                }
+                }
                 
                 
               
@@ -434,15 +436,15 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public void notifyConnected(String ip) throws RemoteException {
+    public void notifyConnected(String whosconnected) throws RemoteException {
         gui.addStringAndUpdate("Client Connected");
        
-        hash.put(ip, getTimeStamp());
+        hash.put(whosconnected, getTimeStamp());
 
         numberOfClientsConnected++;
 
     }
-     private double getTimeStamp(){
+     public double getTimeStamp(){
         Calendar cal = Calendar.getInstance();
     	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         cal.getTime();
