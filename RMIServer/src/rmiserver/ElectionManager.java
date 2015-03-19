@@ -41,6 +41,7 @@ public class ElectionManager {
     private final GUI gui;
     private boolean isPartition = false;
     public boolean isLeader = false;
+    public boolean connectedToLeader = false;
 
     public ElectionManager(String[] replicaips, GUI gui) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
@@ -48,6 +49,7 @@ public class ElectionManager {
         //this.currentLeaderIp = getFirstLeader(replicaips);
         // get the highest ip address and set as initial leader
         this.currentLeaderIp = null;
+        activeReplicas = new ArrayList<>();
 
         this.myIP = getMyIp();
 
@@ -137,18 +139,14 @@ public class ElectionManager {
 
                 while (true) {
 
-                    //gui.addStringAndUpdate(currentLeaderIp);
-                    if(isLeader){
-                    
-                        
-                        
-                    }else if (currentLeaderIp != null) {
-
+                    gui.addStringAndUpdate(".");
+                    if (!isLeader && connectedToLeader) {
+                        gui.addStringAndUpdate("I am not the leader");
                         try {
                             // check if leader is alive
                             if (rmi.isRunning()) {
 
-                                //activeReplicas.addAll(rmi.getActiveReplicas());
+                                activeReplicas.addAll(rmi.getActiveReplicas());
                                 gui.addStringAndUpdate("Leader " + currentLeaderIp + " is running");
 
                             }
@@ -158,23 +156,30 @@ public class ElectionManager {
                             // connect to next highest ip
                             gui.addStringAndUpdate("Leader crashed or corrupt");
                             try {
+                                connectedToLeader = false;
                                 connectToRunnerUp();
+                                gui.addStringAndUpdate("done connect runner");
                             } catch (RemoteException ex1) {
-                                Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                                gui.addStringAndUpdate("fail connect runner" + ex1.getMessage());
                             } catch (NotBoundException ex1) {
-                                Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
+                                gui.addStringAndUpdate("fail connect runner" + ex1.getMessage());
                             }
                             
                         }
                         
-                        try {
+                        
+
+                    }else{
+                    
+                    gui.addStringAndUpdate("I am the leader");
+                    }
+                    
+                    try {
                             // every 2 seconds
                             Thread.sleep(2000);
                         } catch (InterruptedException ex) {
-                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex);
+                            gui.addStringAndUpdate("timer failed");
                         }
-
-                    }
                 }
 
             }
@@ -189,7 +194,7 @@ public class ElectionManager {
 
         int needed = replicas / leaders;
         gui.addStringAndUpdate("Attempting to claim " + needed + " of " + replicas + " Replicas");
-        activeReplicas = new ArrayList<>();
+        
         
             for (String replicaIP : replicaIPs) {
                 gui.addStringAndUpdate("trying - " + replicaIP);
@@ -273,11 +278,10 @@ public class ElectionManager {
     private void connectToRunnerUp() throws RemoteException, NotBoundException {
 
         // get next highest leader and connect to it
-        claimReplicas(noOfPartitions, noOfReplicas);
+        //claimReplicas(noOfPartitions, noOfReplicas);
         gui.addStringAndUpdate("1");
         gui.addStringAndUpdate(currentLeaderIp);
-        String temp = getNextLeader(currentLeaderIp);
-        currentLeaderIp = temp;
+        currentLeaderIp = getNextLeader(currentLeaderIp);
         gui.addStringAndUpdate("2");
         connectServer(currentLeaderIp);
         gui.addStringAndUpdate("3");
@@ -290,6 +294,7 @@ public class ElectionManager {
         } else {
 
             gui.addStringAndUpdate("New leader is - " + currentLeaderIp);
+           connectedToLeader = true;
             isLeader = false;
 
 
@@ -332,6 +337,7 @@ public class ElectionManager {
         
         this.currentLeaderIp = currentLeaderIp;
         connectServer(currentLeaderIp);
+        connectedToLeader = true;
         this.isLeader = false;
         
     }

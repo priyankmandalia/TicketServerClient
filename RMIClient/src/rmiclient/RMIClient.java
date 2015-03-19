@@ -136,7 +136,7 @@ public class RMIClient extends JFrame {
         for (String ServerIP : serverIPs) {
             
             try {
-                
+                ////********* this has commited
                 connectServer(ServerIP);
                 String serverip = rmi.getWriteServer();
                 if(!serverip.matches(ServerIP)){

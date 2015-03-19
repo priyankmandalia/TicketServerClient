@@ -9,8 +9,24 @@
         
       <server id = "1">
                 
+        <ip>148.197.42.117</ip>
+        
+        </server>
+        
+        <server id = "2">
+      
+                  
         <ip>148.197.42.54</ip>
         
         </server>
+        
+        <server id = "3">
+      
+                  
+        <ip>148.197.42.165</ip>
+        
+        </server>
+        
+
 
 </servers>

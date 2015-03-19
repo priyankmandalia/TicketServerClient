@@ -48,7 +48,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     private int amountOfEvents;
     private int numberOfClientsConnected;
     private int indexOfReplica = 0;
-    private boolean connectedToLeader = false;
+    
     //private String[] actualReplicas;
 
     public static void main(String[] args) throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
@@ -267,11 +267,17 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
             } catch (NotBoundException ex) {
                 Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
             }
-            bookings.addAll(rmi.getEventByExactName(event).getBookings());
+            
+            Event e =  rmi.getEventByExactName(event);
+            if(e != null){
+            
+                return e.getBookings();
+            
+            }
 
         }
 
-        return bookings;
+        return null;
 
     }
 
@@ -493,12 +499,12 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public boolean claimAsReplica(String ip) throws RemoteException {
 
-        if (!replicaElectionManager.isLeader && !connectedToLeader) {
+        if (!replicaElectionManager.isLeader && !replicaElectionManager.connectedToLeader) {
             
             try {
                 
                 replicaElectionManager.setCurrentLeaderIp(ip);
-                connectedToLeader = true;
+                replicaElectionManager.connectedToLeader = true;
                
                 gui.addStringAndUpdate("Claimed As Replica By:" + ip);
                 if(events != null){
