@@ -75,11 +75,6 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
 
         super();
         
-        this.events.add(new Event("Glastonbury 2015", "A major UK music and contemporary performance arts festival"));
-        this.events.add(new Event("Greatbury 2015", "A major UK music and contemporary performance arts festival"));
-        this.events.add(new Event("Gusbury 2015", "A major UK music and contemporary performance arts festival"));
-        this.events.add(new Event("Priyankbury 2015", "A major UK music and contemporary performance arts festival"));
-
         this.gui = new GUI("RMI Server");
 
         this.myIP = getMyIp();
@@ -259,10 +254,24 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public ArrayList<String> getBookings(String event) {
+    public ArrayList<String> getBookings(String event) throws RemoteException {
 
         gui.addStringAndUpdate("Bookings returned for - " + event);
-        return getEventByExactName(event).getBookings();
+        
+        ArrayList<String> bookings = new ArrayList<>();
+
+        for (int i = 0; i < partitionIPs.length; i++) {
+
+            try {
+                connectServer(partitionIPs[i]);
+            } catch (NotBoundException ex) {
+                Logger.getLogger(RMIServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            bookings.addAll(rmi.getEventByExactName(event).getBookings());
+
+        }
+
+        return bookings;
 
     }
 
@@ -484,7 +493,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     @Override
     public boolean claimAsReplica(String ip) throws RemoteException {
 
-        if (!replicaElectionManager.isLeader) {
+        if (!replicaElectionManager.isLeader && !connectedToLeader) {
             
             try {
                 
