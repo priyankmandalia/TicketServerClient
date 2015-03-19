@@ -14,8 +14,12 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -56,17 +60,20 @@ public class RMIClient extends JFrame {
     private static int i = -1;
     private static String replicaIPs[];
     private static String partitionIPs[];
+    private static String myIP;
 
     private static Map<String, Integer> map = new HashMap<>();
 
     public static void main(String args[]) throws RemoteException, NotBoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException {
 
+        myIP = getMyIp();
+        
         paramReader params = new paramReader("partitions.xml", "replicas.xml");
         replicaIPs = params.getReplicas();
         partitionIPs = params.getPartitions();
         
         connectLowestLoadServer();
-        rmi.notifyConnected();
+        rmi.notifyConnected(myIP);
         RMIClient obj = new RMIClient();
         
         
@@ -105,6 +112,16 @@ public class RMIClient extends JFrame {
         writeServer = lowestLoadServer;
         readServer = rmi.getReadServer();
         System.out.println("read - "+readServer);
+
+    }
+    
+    public static String getMyIp() throws MalformedURLException, IOException {
+
+        URL whatismyip = new URL("http://checkip.amazonaws.com/");
+        BufferedReader in = new BufferedReader(new InputStreamReader(whatismyip.openStream()));
+        //you get the IP as a String
+        String ip = in.readLine();
+        return ip;
 
     }
     

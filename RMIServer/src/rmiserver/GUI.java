@@ -45,7 +45,7 @@ public class GUI extends JFrame
         
     }
     
-    public synchronized void addStringAndUpdate(String input){
+    public void addStringAndUpdate(String input){
     
         logText.setForeground(Color.white);
         logText.setFont(font);

@@ -14,7 +14,9 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
@@ -32,6 +34,7 @@ public class ElectionManager {
     private final String[] replicaIPs;
     private final String[] partitionIPs;
     public ArrayList<String> activeReplicas;
+    
     private final paramReader params;
     private final int noOfReplicas, noOfPartitions;
     private final String myIP;
@@ -135,7 +138,11 @@ public class ElectionManager {
                 while (true) {
 
                     //gui.addStringAndUpdate(currentLeaderIp);
-                    if (currentLeaderIp != null && !currentLeaderIp.matches(myIP)) {
+                    if(isLeader){
+                    
+                        
+                        
+                    }else if (currentLeaderIp != null) {
 
                         try {
                             // check if leader is alive
@@ -194,6 +201,7 @@ public class ElectionManager {
                         if (rmi.claimAsReplica(myIP)) {
                             gui.addStringAndUpdate("Found Replica");
                             activeReplicas.add(replicaIP);
+                            
                         }
                     }
                 } catch (RemoteException | NotBoundException ex) {
@@ -208,6 +216,14 @@ public class ElectionManager {
 
         return activeReplicas;
 
+    }
+    
+    private double getTimeStamp(){
+        Calendar cal = Calendar.getInstance();
+    	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        cal.getTime();
+        return  Double.parseDouble(sdf.format(cal.getTime()).replace(":", ""));
+        
     }
 
     private String getNextLeader(String currentLeader) {

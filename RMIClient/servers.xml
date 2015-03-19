@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<servers>
+	
+    <server id = "0">
+                
+        <ip>148.197.41.51</ip>
+        
+        </server>
+        
+      <server id = "1">
+                
+        <ip>148.197.42.54</ip>
+        
+        </server>
+
+</servers>

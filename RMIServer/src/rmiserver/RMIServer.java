@@ -12,12 +12,18 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 import rmi.*;
+import static rmiserver.ElectionManager.getMyIp;
 
 
 /*
@@ -36,7 +42,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     GUI gui;
     static RMI rmi;
     ElectionManager replicaElectionManager;
-
+    HashMap<String,Double> hash = new HashMap<>();
     String replicaIPs[];
     String partitionIPs[];
     private final String myIP;
@@ -58,7 +64,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         // as its a sub class of unicast remote object
         try {
             Registry reg = LocateRegistry.createRegistry(port);
-            reg.rebind("server", new RMIServer());
+            reg.rebind("server", new RMIServer());            
             System.out.println("reg.rebind");
         } catch (RemoteException | NotBoundException ex1) {
             Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex1);
@@ -69,7 +75,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     public RMIServer() throws RemoteException, NotBoundException, MalformedURLException, IOException, InterruptedException, ParserConfigurationException, SAXException, URISyntaxException {
 
         super();
-
+        
         this.events.add(new Event("Glastonbury 2015", "A major UK music and contemporary performance arts festival"));
         this.events.add(new Event("Greatbury 2015", "A major UK music and contemporary performance arts festival"));
         this.events.add(new Event("Gusbury 2015", "A major UK music and contemporary performance arts festival"));
@@ -89,6 +95,50 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
         //gui.addStringAndUpdate("Partition Manager Running");
 
     }
+    
+    private void go() throws RemoteException, NotBoundException, IOException, InterruptedException {
+
+        Thread t = new Thread(new Runnable() {
+
+            int serversAlive;
+
+            @Override
+            public void run() {
+
+                while(true){
+                
+                    double currentTime = getTimeStamp();
+                    Iterator it = hash.entrySet().iterator();
+                    
+                    while (it.hasNext()) {
+                        Map.Entry pair = (Map.Entry)it.next();
+                        if(currentTime - (Double)pair.getValue() > 5){
+                        
+                            it.remove();
+                            numberOfClientsConnected--;
+                            
+                        }
+                    }
+                    
+                    try {
+                            // every 2 seconds
+                            Thread.sleep(2000);
+                            
+                    } catch (InterruptedException ex) {
+                            Logger.getLogger(ElectionManager.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                
+                }                
+                
+                
+              
+             
+            }});
+        // start thread defined above
+        t.start();
+
+    }
+
 
     public static String getMyIp() throws MalformedURLException, IOException {
 
@@ -384,12 +434,24 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public void notifyConnected() throws RemoteException {
+    public void notifyConnected(String ip) throws RemoteException {
         gui.addStringAndUpdate("Client Connected");
+       
+        hash.put(ip, getTimeStamp());
+
         numberOfClientsConnected++;
 
     }
-
+     private double getTimeStamp(){
+        Calendar cal = Calendar.getInstance();
+    	SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        cal.getTime();
+        String time = sdf.format(cal.getTime());
+        String[] parts = time.split(":");
+        
+        return  Double.parseDouble(parts[0])*120 + Double.parseDouble(parts[1])*60 + Double.parseDouble(parts[2]);
+        
+    }
     @Override
     public void notifyDisconnected() throws RemoteException {
         gui.addStringAndUpdate("Client Disconnected");
@@ -426,6 +488,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
                 
                 replicaElectionManager.setCurrentLeaderIp(ip);
                 connectedToLeader = true;
+               
                 gui.addStringAndUpdate("Claimed As Replica By:" + ip);
                 return true;
                 
