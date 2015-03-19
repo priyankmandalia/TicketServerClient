@@ -436,7 +436,7 @@ public class RMIServer extends UnicastRemoteObject implements RMI {
     }
 
     @Override
-    public void notifyConnected(String whosconnected) throws RemoteException {
+    public void tellConnected(String whosconnected) throws RemoteException {
         gui.addStringAndUpdate("Client Connected");
        
         hash.put(whosconnected, getTimeStamp());

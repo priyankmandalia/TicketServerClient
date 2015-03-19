@@ -66,6 +66,11 @@ public class RMIClient extends JFrame {
     public static void main(String args[]) throws RemoteException, NotBoundException, ParserConfigurationException, SAXException, IOException, URISyntaxException, InterruptedException {
 
         myIP = getMyIp();
+        while(myIP == null){
+        
+            System.out.println("myip is null");
+        
+        };
         
         paramReader params = new paramReader("servers.xml");
         
@@ -95,7 +100,7 @@ public class RMIClient extends JFrame {
                     try {
                         
                         connectServer(writeServer);
-                        rmi.notifyConnected(myIP);
+                        rmi.tellConnected(myIP);
                         
                     } catch (RemoteException ex) {
                         Logger.getLogger(RMIClient.class.getName()).log(Level.SEVERE, null, ex);
@@ -173,7 +178,7 @@ public class RMIClient extends JFrame {
             writeServer = lowestLoadServer;
             readServer = rmi.getReadServer();
             System.out.println("read - "+readServer);
-            rmi.notifyConnected(myIP);
+            rmi.tellConnected(myIP);
             
         }else{
             
